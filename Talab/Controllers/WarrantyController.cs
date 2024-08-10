@@ -167,6 +167,11 @@ namespace Talab.Controllers
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Không tìm thấy mã thẻ bảo thành !",null);
                 }
+                var checkExit = _context.warrantys.FirstOrDefault(d => d.codeNumber == request.CodeNumber && d.warrantyId !=request.WarrantyId);
+                if (checkExit != null)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
+                }
                 using var transaction = _context.Database.BeginTransaction();
                 existingWarranty.patientName = request.PatientName;
                 existingWarranty.clinic = request.Clinic;
@@ -260,6 +265,11 @@ namespace Talab.Controllers
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành lên !");
                 }
+                var checkExit = _context.warrantys.FirstOrDefault(d=> d.codeNumber == request.CodeNumber);
+                if (checkExit!= null)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
+                }
                 using var transaction = _context.Database.BeginTransaction();
                 warrantys warranty = new warrantys()
                  {
@@ -318,29 +328,41 @@ namespace Talab.Controllers
         }
 
         [HttpGet("{CodeNumber}")]
-        public async Task<HttpResponseModel> GetWarrantyByCodeNumber(string CodeNumber = "")
+        public async Task<HttpResponseModel> GetWarrantyByCodeNumber(string CodeNumber)
         {
             try
             {
-                var warrantysDB = _context.warrantys.AsNoTracking().
-                    Where(d => d.state == (short)EState.Active && d.codeNumber == CodeNumber);
-                var assignQuery = (from a in warrantysDB 
-                                   select new WarrantyModel
-                                   {
-                                       WarrantyId = a.warrantyId,
-                                       PatientName = a.patientName,
-                                       PatientPhoneNumber = a.patientPhoneNumber,
-                                       Clinic = a.clinic,
-                                       LabName = a.labName,
-                                       Doctor = a.doctor,
-                                       Product = a.product,
-                                       CodeNumber = a.codeNumber,
-                                       ExpirationDate = a.expirationDate,
-                                       CreatedAt = a.created_at,
-                                       UpdatedAt = a.updated_at
-                                   }
-                );
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, assignQuery);
+                if (string.IsNullOrEmpty(CodeNumber))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
+                }
+
+                // Lấy bảo hành theo mã số
+                var warrantyDB = await _context.warrantys.AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.codeNumber == CodeNumber);
+
+                if (warrantyDB == null)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
+                }
+
+                // Chuyển đổi đối tượng lấy được thành WarrantyModel
+                var warrantyModel = new WarrantyModel
+                {
+                    WarrantyId = warrantyDB.warrantyId,
+                    PatientName = warrantyDB.patientName,
+                    PatientPhoneNumber = warrantyDB.patientPhoneNumber,
+                    Clinic = warrantyDB.clinic,
+                    LabName = warrantyDB.labName,
+                    Doctor = warrantyDB.doctor,
+                    Product = warrantyDB.product,
+                    CodeNumber = warrantyDB.codeNumber,
+                    ExpirationDate = warrantyDB.expirationDate,
+                    CreatedAt = warrantyDB.created_at,
+                    UpdatedAt = warrantyDB.updated_at
+                };
+
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, warrantyModel);
             }
             catch (Exception ex)
             {
@@ -348,6 +370,7 @@ namespace Talab.Controllers
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
+
 
         [HttpDelete("{Id}")]
         public async Task<HttpResponseModel> DeleteWarranty(int Id = -1)
