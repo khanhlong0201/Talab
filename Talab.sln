@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34714.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Talab", "Talab\Talab.csproj", "{99D1ABD5-C8DB-4013-A589-9DAFD4FEFDC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CORE_TALAB", "CORE_TALAB\CORE_TALAB.csproj", "{09E2987A-F4BA-46E1-8AE4-D6D068F736C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{99D1ABD5-C8DB-4013-A589-9DAFD4FEFDC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99D1ABD5-C8DB-4013-A589-9DAFD4FEFDC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99D1ABD5-C8DB-4013-A589-9DAFD4FEFDC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99D1ABD5-C8DB-4013-A589-9DAFD4FEFDC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09E2987A-F4BA-46E1-8AE4-D6D068F736C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09E2987A-F4BA-46E1-8AE4-D6D068F736C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09E2987A-F4BA-46E1-8AE4-D6D068F736C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09E2987A-F4BA-46E1-8AE4-D6D068F736C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8EDEDC2F-3BBC-4D1D-85E3-4B9F7FA3FE1E}
+	EndGlobalSection
+EndGlobal
