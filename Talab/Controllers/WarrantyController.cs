@@ -21,6 +21,9 @@ using CORE_TALAB.Model.Reponse;
 using System.Net.NetworkInformation;
 using Talab.Model.Warranty;
 using Microsoft.AspNetCore.Hosting;
+using System.Collections.Generic;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -41,43 +44,79 @@ namespace Talab.Controllers
         }
 
         [HttpGet]
-        public async Task<HttpResponseModel> GetWarrantys(int page = 1, int pageSize = 100000, string key = "")
+        public IActionResult GetWarrantys(int page = 1, int pageSize = 100, string PatientName ="", string PatientPhoneNumber ="",string Clinic ="", string LabName = "",
+            string Doctor = "", string Product = "", string CodeNumber = "", DateTime? fromDate = null, DateTime? toDate = null)
         {
             try
             {
                 if (page <= 0 || pageSize <= 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_INVALID_DATA_INPUT, "Dữ liệu đầu vào không hợp lệ !");
+                    throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
-                if (key != null || key + "" != "") key = key.ToLower();
-                var warrantyDB = _context.warrantys.AsNoTracking().
-                    Where(d => d.state == (short)EState.Active).Skip((page - 1) * pageSize).Take(pageSize);
-                var assignQuery = (from a in warrantyDB
-                                   select new WarrantyModel
-                                   {
-                                       WarrantyId = a.warrantyId,
-                                       PatientName = a.patientName,
-                                       PatientPhoneNumber = a.patientPhoneNumber,
-                                       Clinic = a.clinic,
-                                      LabName = a.labName,
-                                      Doctor = a.doctor,
-                                      Product = a.product,
-                                      CodeNumber = a.codeNumber,
-                                      ExpirationDate = a.expirationDate,
-                                      CreatedAt = a.created_at,
-                                      UpdatedAt = a.updated_at
-                                   }
-                       )
-                        .OrderByDescending(e => e.CreatedAt)  // Sắp xếp giảm dần theo created_at
-                       .ToList();
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, assignQuery);
+
+                // Tính tổng số bản ghi
+                var total = _context.warrantys
+                    .Where(d => d.state == (short)EState.Active)
+                    .Count();
+
+                // Lấy dữ liệu cho trang hiện tại với sắp xếp
+                var warrantyDB = _context.warrantys.AsNoTracking()
+                    .Where(d => d.state == (short)EState.Active
+                    && ((string.IsNullOrEmpty(PatientName) || (!string.IsNullOrEmpty(PatientName) && d.patientName.ToLower().Contains(PatientName.ToLower()))))
+                    && ((string.IsNullOrEmpty(PatientPhoneNumber) || (!string.IsNullOrEmpty(PatientPhoneNumber) && d.patientPhoneNumber.ToLower().Contains(PatientPhoneNumber.ToLower()))))
+                     && ((string.IsNullOrEmpty(Clinic) || (!string.IsNullOrEmpty(Clinic) && d.clinic.ToLower().Contains(Clinic.ToLower()))))
+                      && ((string.IsNullOrEmpty(LabName) || (!string.IsNullOrEmpty(LabName) && d.clinic.ToLower().Contains(LabName.ToLower()))))
+                      && ((string.IsNullOrEmpty(Doctor) || (!string.IsNullOrEmpty(Doctor) && d.doctor.ToLower().Contains(Doctor.ToLower()))))
+                      && ((string.IsNullOrEmpty(Product) || (!string.IsNullOrEmpty(Product) && d.product.ToLower().Contains(Product.ToLower()))))
+                       && ((string.IsNullOrEmpty(CodeNumber) || (!string.IsNullOrEmpty(CodeNumber) && d.codeNumber.ToLower().Contains(CodeNumber.ToLower()))))
+                       && ((!fromDate.HasValue && fromDate == null) || (fromDate.HasValue && fromDate!=null && d.expirationDate>= fromDate))
+                       && ((!toDate.HasValue && toDate == null) || (toDate.HasValue && toDate != null && d.expirationDate <= toDate)))
+                    .OrderByDescending(d => d.created_at) // Sắp xếp trước khi phân trang
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
+                {
+                    WarrantyId = a.warrantyId,
+                    PatientName = a.patientName,
+                    PatientPhoneNumber = a.patientPhoneNumber,
+                    Clinic = a.clinic,
+                    LabName = a.labName,
+                    Doctor = a.doctor,
+                    Product = a.product,
+                    CodeNumber = a.codeNumber,
+                    ExpirationDate = a.expirationDate,
+                    CreatedAt = a.created_at,
+                    UpdatedAt = a.updated_at
+                }).ToList();
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "Thành công",
+                    datas = warrantyQuery,
+                    total,  // Tổng số bản ghi
+                    page,  // Trang hiện tại
+                    pageSize  // Kích thước trang
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError("Notification GetWarrantys: " + ex.Message);
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
+                return Ok(new
+                {
+                    status = "error",
+                    message = "Thất bại",
+                    datas = new List<object>(),
+                    total = 0,  // Tổng số bản ghi là 0 khi lỗi
+                    page,
+                    pageSize
+                });
             }
         }
+
+
 
         [HttpPut]
         public async Task<HttpResponseModel> UpdateWarranty([FromBody] WarrantyModel request)
