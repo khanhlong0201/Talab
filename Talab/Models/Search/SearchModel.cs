@@ -13,15 +13,15 @@ namespace Talab.Model.Search
 {
     public class SearchModel
     {
-        public string PatientName { get; set; }
-        public string PatientPhoneNumber { get; set; }
-        public string Clinic { get; set; }
-        public string LabName { get; set; }
-        public string Doctor { get; set; }
-        public string Product { get; set; }
-        public string CodeNumber { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
+        public string patientName { get; set; }
+        public string patientPhoneNumber { get; set; }
+        public string clinic { get; set; }
+        public string labName { get; set; }
+        public string doctor { get; set; }
+        public string product { get; set; }
+        public string codeNumber { get; set; }
+        public DateTime? fromDate { get; set; }
+        public DateTime? toDate { get; set; }
     }
 
 }

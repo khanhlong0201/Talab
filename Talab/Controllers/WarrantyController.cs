@@ -62,15 +62,15 @@ namespace Talab.Controllers
                 // Lấy dữ liệu cho trang hiện tại với sắp xếp
                 var warrantyDB = _context.warrantys.AsNoTracking()
                     .Where(d => d.state == (short)EState.Active
-                    && ((string.IsNullOrEmpty(search.PatientName) || (!string.IsNullOrEmpty(search.PatientName) && d.patientName.ToLower().Contains(search.PatientName.ToLower()))))
-                    && ((string.IsNullOrEmpty(search.PatientPhoneNumber) || (!string.IsNullOrEmpty(search.PatientPhoneNumber) && d.patientPhoneNumber.ToLower().Contains(search.PatientPhoneNumber.ToLower()))))
-                     && ((string.IsNullOrEmpty(search.Clinic) || (!string.IsNullOrEmpty(search.Clinic) && d.clinic.ToLower().Contains(search.Clinic.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.LabName) || (!string.IsNullOrEmpty(search.LabName) && d.clinic.ToLower().Contains(search.LabName.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.Doctor) || (!string.IsNullOrEmpty(search.Doctor) && d.doctor.ToLower().Contains(search.Doctor.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.Product) || (!string.IsNullOrEmpty(search.Product) && d.product.ToLower().Contains(search.Product.ToLower()))))
-                       && ((string.IsNullOrEmpty(search.CodeNumber) || (!string.IsNullOrEmpty(search.CodeNumber) && d.codeNumber.ToLower().Contains(search.CodeNumber.ToLower()))))
-                       && ((!search.FromDate.HasValue && search.FromDate == null) || (search.FromDate.HasValue && search.FromDate != null && d.expirationDate>= search.FromDate))
-                       && ((!search.ToDate.HasValue && search.ToDate == null) || (search.ToDate.HasValue && search.ToDate != null && d.expirationDate <= search.ToDate)))
+                    && ((string.IsNullOrEmpty(search.patientName) || (!string.IsNullOrEmpty(search.patientName) && d.patientName.ToLower().Contains(search.patientName.ToLower()))))
+                    && ((string.IsNullOrEmpty(search.patientPhoneNumber) || (!string.IsNullOrEmpty(search.patientPhoneNumber) && d.patientPhoneNumber.ToLower().Contains(search.patientPhoneNumber.ToLower()))))
+                     && ((string.IsNullOrEmpty(search.clinic) || (!string.IsNullOrEmpty(search.clinic) && d.clinic.ToLower().Contains(search.clinic.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.labName) || (!string.IsNullOrEmpty(search.labName) && d.clinic.ToLower().Contains(search.labName.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.doctor) || (!string.IsNullOrEmpty(search.doctor) && d.doctor.ToLower().Contains(search.doctor.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.product) || (!string.IsNullOrEmpty(search.product) && d.product.ToLower().Contains(search.product.ToLower()))))
+                       && ((string.IsNullOrEmpty(search.codeNumber) || (!string.IsNullOrEmpty(search.codeNumber) && d.codeNumber.ToLower().Contains(search.codeNumber.ToLower()))))
+                       && ((!search.fromDate.HasValue && search.fromDate == null) || (search.fromDate.HasValue && search.fromDate != null && d.expirationDate>= search.fromDate))
+                       && ((!search.toDate.HasValue && search.toDate == null) || (search.toDate.HasValue && search.toDate != null && d.expirationDate <= search.toDate)))
                     .OrderByDescending(d => d.created_at) // Sắp xếp trước khi phân trang
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -78,17 +78,17 @@ namespace Talab.Controllers
 
                 var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
                 {
-                    WarrantyId = a.warrantyId,
-                    PatientName = a.patientName,
-                    PatientPhoneNumber = a.patientPhoneNumber,
-                    Clinic = a.clinic,
-                    LabName = a.labName,
-                    Doctor = a.doctor,
-                    Product = a.product,
-                    CodeNumber = a.codeNumber,
-                    ExpirationDate = a.expirationDate,
-                    CreatedAt = a.created_at,
-                    UpdatedAt = a.updated_at
+                    warrantyId = a.warrantyId,
+                    patientName = a.patientName,
+                    patientPhoneNumber = a.patientPhoneNumber,
+                    clinic = a.clinic,
+                    labName = a.labName,
+                    doctor = a.doctor,
+                    product = a.product,
+                    codeNumber = a.codeNumber,
+                    expirationDate = a.expirationDate,
+                    createdAt = a.created_at,
+                    updatedAt = a.updated_at
                 }).ToList();
 
                 return Ok(new
@@ -121,65 +121,65 @@ namespace Talab.Controllers
         {
             try
             {
-                if (request == null || request.WarrantyId <= 0)
+                if (request == null || request.warrantyId <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Dữ liệu đầu vào không hợp lệ !",null);
                 }
-                if (request.PatientName + "" == "")
+                if (request.patientName + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
                 }
-                if (request.PatientPhoneNumber + "" == "")
+                if (request.patientPhoneNumber + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập sdt bệnh nhân !", null);
                 }
-                if (request.Clinic + "" == "")
+                if (request.clinic + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
                 }
-                if (request.LabName + "" == "")
+                if (request.labName + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
                 }
-                if (request.Doctor + "" == "")
+                if (request.doctor + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
                 }
-                if (request.Product + "" == "")
+                if (request.product + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
                 }
-                if (request.CodeNumber + "" == "")
+                if (request.codeNumber + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
                 }
                 var defaultDate = new DateTime();
-                if (request.ExpirationDate == null || request.ExpirationDate == defaultDate)
+                if (request.expirationDate == null || request.expirationDate == defaultDate)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
                 }
-                if (request.ListImageUrl == null || request.ListImageUrl.Count <= 0)
+                if (request.listImageUrl == null || request.listImageUrl.Count <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành lên !");
                 }
-                var existingWarranty = await _context.warrantys.FirstOrDefaultAsync(a => a.warrantyId == request.WarrantyId);
+                var existingWarranty = await _context.warrantys.FirstOrDefaultAsync(a => a.warrantyId == request.warrantyId);
                 if (existingWarranty == null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Không tìm thấy mã thẻ bảo thành !",null);
                 }
-                var checkExit = _context.warrantys.FirstOrDefault(d => d.codeNumber == request.CodeNumber && d.warrantyId !=request.WarrantyId);
+                var checkExit = _context.warrantys.FirstOrDefault(d => d.codeNumber == request.codeNumber && d.warrantyId !=request.warrantyId);
                 if (checkExit != null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
                 }
                 using var transaction = _context.Database.BeginTransaction();
-                existingWarranty.patientName = request.PatientName;
-                existingWarranty.clinic = request.Clinic;
-                existingWarranty.labName = request.LabName;
-                existingWarranty.doctor = request.Doctor;
-                existingWarranty.product = request.Product;
-                existingWarranty.codeNumber = request.CodeNumber;
-                existingWarranty.expirationDate = request.ExpirationDate;
+                existingWarranty.patientName = request.patientName;
+                existingWarranty.clinic = request.clinic;
+                existingWarranty.labName = request.labName;
+                existingWarranty.doctor = request.doctor;
+                existingWarranty.product = request.product;
+                existingWarranty.codeNumber = request.codeNumber;
+                existingWarranty.expirationDate = request.expirationDate;
                 existingWarranty.updated_at = DateTime.Now;
                 var status = _context.SaveChanges();
                 if (status <= 0)
@@ -187,9 +187,9 @@ namespace Talab.Controllers
                     transaction.Rollback();
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Lỗi khi cập nhật thẻ bảo thành !",null);
                 }
-                if (request.ListImageUrl != null && request.ListImageUrl.Count > 0)
+                if (request.listImageUrl != null && request.listImageUrl.Count > 0)
                 {
-                    foreach (var link in request.ListImageUrl)
+                    foreach (var link in request.listImageUrl)
                     {
                         images imgae = new images
                         {
@@ -228,44 +228,44 @@ namespace Talab.Controllers
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Dữ liệu đầu vào không hợp lệ !", null);
                 }
-                if (request.PatientName + ""=="")
+                if (request.patientName + ""=="")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
                 }
-                if (request.PatientPhoneNumber + "" == "")
+                if (request.patientPhoneNumber + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập sdt bệnh nhân !", null);
                 }
-                if (request.Clinic + "" == "")
+                if (request.clinic + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
                 }
-                if (request.LabName + "" == "")
+                if (request.labName + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
                 }
-                if (request.Doctor + "" == "")
+                if (request.doctor + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
                 }
-                if (request.Product + "" == "")
+                if (request.product + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
                 }
-                if (request.CodeNumber + "" == "")
+                if (request.codeNumber + "" == "")
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
                 }
                 var defaultDate = new DateTime();
-                if (request.ExpirationDate == null || request.ExpirationDate == defaultDate)
+                if (request.expirationDate == null || request.expirationDate == defaultDate)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
                 }
-                if (request.ListImageUrl == null || request.ListImageUrl.Count <= 0)
+                if (request.listImageUrl == null || request.listImageUrl.Count <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành lên !");
                 }
-                var checkExit = _context.warrantys.FirstOrDefault(d=> d.codeNumber == request.CodeNumber);
+                var checkExit = _context.warrantys.FirstOrDefault(d=> d.codeNumber == request.codeNumber);
                 if (checkExit!= null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
@@ -273,14 +273,14 @@ namespace Talab.Controllers
                 using var transaction = _context.Database.BeginTransaction();
                 warrantys warranty = new warrantys()
                  {
-                     patientName = request.PatientName,
-                     patientPhoneNumber = request.PatientPhoneNumber,
-                     clinic = request.Clinic,
-                     labName = request.LabName,
-                     doctor = request.Doctor,
-                     product = request.Product,
-                     codeNumber = request.CodeNumber,
-                     expirationDate = request.ExpirationDate,
+                     patientName = request.patientName,
+                     patientPhoneNumber = request.patientPhoneNumber,
+                     clinic = request.clinic,
+                     labName = request.labName,
+                     doctor = request.doctor,
+                     product = request.product,
+                     codeNumber = request.codeNumber,
+                     expirationDate = request.expirationDate,
                      created_at = DateTime.Now,
                      updated_at= new DateTime(),
                      state = (short)EState.Active
@@ -289,9 +289,9 @@ namespace Talab.Controllers
                 var status = _context.SaveChanges();
                 if (status > 0)
                 {
-                    if (request.ListImageUrl != null && request.ListImageUrl.Count > 0)
+                    if (request.listImageUrl != null && request.listImageUrl.Count > 0)
                     {
-                        foreach (var link in request.ListImageUrl)
+                        foreach (var link in request.listImageUrl)
                         {
                             images imgae = new images
                             {
@@ -327,19 +327,19 @@ namespace Talab.Controllers
             }
         }
 
-        [HttpGet("{CodeNumber}")]
-        public async Task<HttpResponseModel> GetWarrantyByCodeNumber(string CodeNumber)
+        [HttpGet("{codeNumber}")]
+        public async Task<HttpResponseModel> GetWarrantyBycodeNumber(string codeNumber)
         {
             try
             {
-                if (string.IsNullOrEmpty(CodeNumber))
+                if (string.IsNullOrEmpty(codeNumber))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
                 // Lấy bảo hành theo mã số
                 var warrantyDB = await _context.warrantys.AsNoTracking()
-                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.codeNumber == CodeNumber);
+                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.codeNumber == codeNumber);
 
                 if (warrantyDB == null)
                 {
@@ -349,28 +349,72 @@ namespace Talab.Controllers
                 // Chuyển đổi đối tượng lấy được thành WarrantyModel
                 var warrantyModel = new WarrantyModel
                 {
-                    WarrantyId = warrantyDB.warrantyId,
-                    PatientName = warrantyDB.patientName,
-                    PatientPhoneNumber = warrantyDB.patientPhoneNumber,
-                    Clinic = warrantyDB.clinic,
-                    LabName = warrantyDB.labName,
-                    Doctor = warrantyDB.doctor,
-                    Product = warrantyDB.product,
-                    CodeNumber = warrantyDB.codeNumber,
-                    ExpirationDate = warrantyDB.expirationDate,
-                    CreatedAt = warrantyDB.created_at,
-                    UpdatedAt = warrantyDB.updated_at
+                    warrantyId = warrantyDB.warrantyId,
+                    patientName = warrantyDB.patientName,
+                    patientPhoneNumber = warrantyDB.patientPhoneNumber,
+                    clinic = warrantyDB.clinic,
+                    labName = warrantyDB.labName,
+                    doctor = warrantyDB.doctor,
+                    product = warrantyDB.product,
+                    codeNumber = warrantyDB.codeNumber,
+                    expirationDate = warrantyDB.expirationDate,
+                    createdAt = warrantyDB.created_at,
+                    updatedAt = warrantyDB.updated_at
                 };
 
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, warrantyModel);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Warranty GetWarrantyByCodeNumber: " + ex.Message);
+                _logger.LogError("Warranty GetWarrantyBycodeNumber: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
 
+        [HttpGet("id/{id}")]
+        public async Task<HttpResponseModel> GetWarrantyById(int id)
+        {
+            try
+            {
+                // Kiểm tra xem id có hợp lệ không
+                if (id <= 0)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID không hợp lệ");
+                }
+
+                // Lấy bảo hành theo ID
+                var warrantyDB = await _context.warrantys.AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.warrantyId == id);
+
+                if (warrantyDB == null)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
+                }
+
+                // Chuyển đổi đối tượng lấy được thành WarrantyModel
+                var warrantyModel = new WarrantyModel
+                {
+                    warrantyId = warrantyDB.warrantyId,
+                    patientName = warrantyDB.patientName,
+                    patientPhoneNumber = warrantyDB.patientPhoneNumber,
+                    clinic = warrantyDB.clinic,
+                    labName = warrantyDB.labName,
+                    doctor = warrantyDB.doctor,
+                    product = warrantyDB.product,
+                    codeNumber = warrantyDB.codeNumber,
+                    expirationDate = warrantyDB.expirationDate,
+                    createdAt = warrantyDB.created_at,
+                    updatedAt = warrantyDB.updated_at
+                };
+
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, warrantyModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Warranty GetWarrantyById: " + ex.Message);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
+            }
+        }
 
         [HttpDelete("{Id}")]
         public async Task<HttpResponseModel> DeleteWarranty(int Id = -1)

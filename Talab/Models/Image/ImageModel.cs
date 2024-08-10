@@ -17,12 +17,12 @@ namespace Talab.Model.Image
     }
     public class ImageModel
     {
-        public int image_id { get; set; }
-        public int? waranty_id { get; set; }
+        public int imageId { get; set; }
+        public int? warantyId { get; set; }
         public string link { get; set; }
-        public string link_name { get; set; }
+        public string linkName { get; set; }
         public string type { get; set; }
-        public DateTime created_at { get; set; }
+        public DateTime createdAt { get; set; }
     }
 
 }

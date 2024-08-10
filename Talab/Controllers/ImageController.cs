@@ -155,14 +155,14 @@ namespace Talab.Controllers
                                    join m in _context.images.Where(f => f.state == (short)EState.Active) on i.warrantyId equals m.warrantyId
                                    select new ImageModel
                                    {
-                                       image_id = m.image_id,
-                                       waranty_id = m.warrantyId,
+                                       imageId = m.image_id,
+                                       warantyId = m.warrantyId,
                                        link = m.link,
-                                       link_name = m.link_name,
+                                       linkName = m.link_name,
                                        type = m.type,
-                                       created_at = m.created_at,
+                                       createdAt = m.created_at,
                                    }
-                        ).OrderByDescending(e => e.created_at).ToList();
+                        ).OrderByDescending(e => e.createdAt).ToList();
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", assignQuery);
             }
             catch (Exception ex)
