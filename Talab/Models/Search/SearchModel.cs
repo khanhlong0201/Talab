@@ -11,6 +11,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Talab.Model.Search
 {
+    public class SearchQueryModel
+    {
+        public SearchModel search { get; set; }
+        public int page { get; set; }
+        public int pageSize { get; set; }   
+    }
     public class SearchModel
     {
         public string patientName { get; set; }

@@ -45,11 +45,11 @@ namespace Talab.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetWarrantys([FromBody]SearchModel search = null, int page = 1, int pageSize = 100)
+        public IActionResult GetWarrantys([FromBody] SearchQueryModel search)
         {
             try
             {
-                if (page <= 0 || pageSize <= 0 || search==null)
+                if (search.page <= 0 || search.pageSize <= 0 || search==null)
                 {
                     throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
@@ -62,18 +62,18 @@ namespace Talab.Controllers
                 // Lấy dữ liệu cho trang hiện tại với sắp xếp
                 var warrantyDB = _context.warrantys.AsNoTracking()
                     .Where(d => d.state == (short)EState.Active
-                    && ((string.IsNullOrEmpty(search.patientName) || (!string.IsNullOrEmpty(search.patientName) && d.patientName.ToLower().Contains(search.patientName.ToLower()))))
-                    && ((string.IsNullOrEmpty(search.patientPhoneNumber) || (!string.IsNullOrEmpty(search.patientPhoneNumber) && d.patientPhoneNumber.ToLower().Contains(search.patientPhoneNumber.ToLower()))))
-                     && ((string.IsNullOrEmpty(search.clinic) || (!string.IsNullOrEmpty(search.clinic) && d.clinic.ToLower().Contains(search.clinic.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.labName) || (!string.IsNullOrEmpty(search.labName) && d.clinic.ToLower().Contains(search.labName.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.doctor) || (!string.IsNullOrEmpty(search.doctor) && d.doctor.ToLower().Contains(search.doctor.ToLower()))))
-                      && ((string.IsNullOrEmpty(search.product) || (!string.IsNullOrEmpty(search.product) && d.product.ToLower().Contains(search.product.ToLower()))))
-                       && ((string.IsNullOrEmpty(search.codeNumber) || (!string.IsNullOrEmpty(search.codeNumber) && d.codeNumber.ToLower().Contains(search.codeNumber.ToLower()))))
-                       && ((!search.fromDate.HasValue && search.fromDate == null) || (search.fromDate.HasValue && search.fromDate != null && d.expirationDate>= search.fromDate))
-                       && ((!search.toDate.HasValue && search.toDate == null) || (search.toDate.HasValue && search.toDate != null && d.expirationDate <= search.toDate)))
+                    && ((string.IsNullOrEmpty(search.search.patientName) || (!string.IsNullOrEmpty(search.search.patientName) && d.patientName.ToLower().Contains(search.search.patientName.ToLower()))))
+                    && ((string.IsNullOrEmpty(search.search.patientPhoneNumber) || (!string.IsNullOrEmpty(search.search.patientPhoneNumber) && d.patientPhoneNumber.ToLower().Contains(search.search.patientPhoneNumber.ToLower()))))
+                     && ((string.IsNullOrEmpty(search.search.clinic) || (!string.IsNullOrEmpty(search.search.clinic) && d.clinic.ToLower().Contains(search.search.clinic.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.search.labName) || (!string.IsNullOrEmpty(search.search.labName) && d.clinic.ToLower().Contains(search.search.labName.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.search.doctor) || (!string.IsNullOrEmpty(search.search.doctor) && d.doctor.ToLower().Contains(search.search.doctor.ToLower()))))
+                      && ((string.IsNullOrEmpty(search.search.product) || (!string.IsNullOrEmpty(search.search.product) && d.product.ToLower().Contains(search.search.product.ToLower()))))
+                       && ((string.IsNullOrEmpty(search.search.codeNumber) || (!string.IsNullOrEmpty(search.search.codeNumber) && d.codeNumber.ToLower().Contains(search.search.codeNumber.ToLower()))))
+                       && ((!search.search.fromDate.HasValue && search.search.fromDate == null) || (search.search.fromDate.HasValue && search.search.fromDate != null && d.expirationDate>= search.search.fromDate))
+                       && ((!search.search.toDate.HasValue && search.search.toDate == null) || (search.search.toDate.HasValue && search.search.toDate != null && d.expirationDate <= search.search.toDate)))
                     .OrderByDescending(d => d.created_at) // Sắp xếp trước khi phân trang
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
+                    .Skip((search.page - 1) * search.pageSize)
+                    .Take(search.pageSize)
                     .ToList();
 
                 var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
@@ -97,8 +97,8 @@ namespace Talab.Controllers
                     message = "Thành công",
                     datas = warrantyQuery,
                     total,  // Tổng số bản ghi
-                    page,  // Trang hiện tại
-                    pageSize  // Kích thước trang
+                    search.page,  // Trang hiện tại
+                    search.pageSize  // Kích thước trang
                 });
             }
             catch (Exception ex)
@@ -110,8 +110,8 @@ namespace Talab.Controllers
                     message = ex.Message !=null ? ex.Message : "Thất bại",
                     datas = new List<object>(),
                     total = 0,  // Tổng số bản ghi là 0 khi lỗi
-                    page,
-                    pageSize
+                    search.page,
+                    search.pageSize
                 });
             }
         }
