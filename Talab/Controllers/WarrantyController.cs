@@ -27,6 +27,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Talab.Model.Search;
 using LinqKit;
 using System.Linq.Expressions;
+using System.Linq.Dynamic.Core;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -56,12 +57,10 @@ namespace Talab.Controllers
                     throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
 
-                // Tính tổng số bản ghi
                 var total = _context.warrantys
                     .Where(d => d.state == (short)EState.Active)
                     .Count();
 
-                // Tạo predicate cho tìm kiếm
                 var predicate = PredicateBuilder.New<Warrantys>(d => d.state == (short)EState.Active);
 
                 if (!string.IsNullOrWhiteSpace(search.SearchModel?.SearchString))
@@ -88,44 +87,24 @@ namespace Talab.Controllers
                     predicate = predicate.And(d => d.expirationDate <= search.SearchModel.ToDate);
                 }
 
-                // Truy vấn cơ sở dữ liệu
                 var query = _context.warrantys.AsNoTracking().Where(predicate);
 
                 // Xử lý sắp xếp
-                switch (search.Sort?.ToLower())
+                var sortColumn = search.Sort ?? "created_at"; // Cột sắp xếp, mặc định là created_at
+                var sortDirection = search.SortDirection?.ToLower() == "desc" ? "desc" : "asc"; // Hướng sắp xếp
+
+                // Xây dựng biểu thức sắp xếp
+                var sortExpression = $"{sortColumn} {sortDirection}";
+
+                // Kiểm tra xem cột có hợp lệ không
+                var validSortColumns = new[] { "patientName", "patientPhoneNumber", "codeNumber", "clinic", "expirationDate", "created_at", "updated_at" };
+                if (!validSortColumns.Contains(sortColumn))
                 {
-                    case "patientname":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.patientName) :
-                            query.OrderBy(d => d.patientName);
-                        break;
-                    case "patientphonenumber":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.patientPhoneNumber) :
-                            query.OrderBy(d => d.patientPhoneNumber);
-                        break;
-                    case "codenumber":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.codeNumber) :
-                            query.OrderBy(d => d.codeNumber);
-                        break;
-                    case "clinic":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.clinic) :
-                            query.OrderBy(d => d.clinic);
-                        break;
-                    case "expirationdate":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.expirationDate) :
-                            query.OrderBy(d => d.expirationDate);
-                        break;
-                    // Thêm các trường sắp xếp khác tại đây
-                    default:
-                        query = query.OrderByDescending(d => d.created_at); // Mặc định nếu không có sắp xếp
-                        break;
+                    sortExpression = "created_at desc"; // Sử dụng mặc định nếu cột không hợp lệ
                 }
 
-                // Phân trang và lấy dữ liệu
+                query = query.OrderBy(sortExpression);
+
                 var warrantyDB = query
                     .Skip((search.Page - 1) * search.PageSize)
                     .Take(search.PageSize)
@@ -170,7 +149,6 @@ namespace Talab.Controllers
                 });
             }
         }
-
 
 
         [HttpPut]
