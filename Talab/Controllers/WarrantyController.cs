@@ -93,16 +93,18 @@ namespace Talab.Controllers
                 var sortColumn = search.Sort ?? "created_at"; // Cột sắp xếp, mặc định là created_at
                 var sortDirection = search.SortDirection?.ToLower() == "desc" ? "desc" : "asc"; // Hướng sắp xếp
 
-                // Xây dựng biểu thức sắp xếp
-                var sortExpression = $"{sortColumn} {sortDirection}";
+                // Danh sách cột hợp lệ
+                var validSortColumns = new[] { "patientName", "patientPhoneNumber", "codeNumber", "clinic", "expirationDate", "created_at", "updated_at" };
 
                 // Kiểm tra xem cột có hợp lệ không
-                var validSortColumns = new[] { "patientName", "patientPhoneNumber", "codeNumber", "clinic", "expirationDate", "created_at", "updated_at" };
                 if (!validSortColumns.Contains(sortColumn))
                 {
-                    sortExpression = "created_at desc"; // Sử dụng mặc định nếu cột không hợp lệ
+                    sortColumn = "created_at"; // Cột mặc định nếu cột không hợp lệ
                 }
 
+                var sortExpression = $"{sortColumn} {sortDirection}";
+
+                // Sắp xếp bằng Dynamic LINQ
                 query = query.OrderBy(sortExpression);
 
                 var warrantyDB = query
@@ -149,7 +151,6 @@ namespace Talab.Controllers
                 });
             }
         }
-
 
         [HttpPut]
         public async Task<HttpResponseModel> UpdateWarranty([FromBody] WarrantyModel request)
