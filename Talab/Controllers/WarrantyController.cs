@@ -92,38 +92,38 @@ namespace Talab.Controllers
                 var query = _context.warrantys.AsNoTracking().Where(predicate);
 
                 // Xử lý sắp xếp
-                switch (search.Sort?.ToLower())
-                {
-                    case "patientname":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.patientName) :
-                            query.OrderBy(d => d.patientName);
-                        break;
-                    case "patientphonenumber":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.patientPhoneNumber) :
-                            query.OrderBy(d => d.patientPhoneNumber);
-                        break;
-                    case "codenumber":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.codeNumber) :
-                            query.OrderBy(d => d.codeNumber);
-                        break;
-                    case "clinic":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.clinic) :
-                            query.OrderBy(d => d.clinic);
-                        break;
-                    case "expirationdate":
-                        query = search.SortDirection?.ToLower() == "desc" ?
-                            query.OrderByDescending(d => d.expirationDate) :
-                            query.OrderBy(d => d.expirationDate);
-                        break;
-                    // Thêm các trường sắp xếp khác tại đây
-                    default:
-                        query = query.OrderByDescending(d => d.created_at); // Mặc định nếu không có sắp xếp
-                        break;
-                }
+                //switch (search.Sort?.ToLower())
+                //{
+                //    case "patientname":
+                //        query = search.SortDirection?.ToLower() == "desc" ?
+                //            query.OrderByDescending(d => d.patientName) :
+                //            query.OrderBy(d => d.patientName);
+                //        break;
+                //    case "patientphonenumber":
+                //        query = search.SortDirection?.ToLower() == "desc" ?
+                //            query.OrderByDescending(d => d.patientPhoneNumber) :
+                //            query.OrderBy(d => d.patientPhoneNumber);
+                //        break;
+                //    case "codenumber":
+                //        query = search.SortDirection?.ToLower() == "desc" ?
+                //            query.OrderByDescending(d => d.codeNumber) :
+                //            query.OrderBy(d => d.codeNumber);
+                //        break;
+                //    case "clinic":
+                //        query = search.SortDirection?.ToLower() == "desc" ?
+                //            query.OrderByDescending(d => d.clinic) :
+                //            query.OrderBy(d => d.clinic);
+                //        break;
+                //    case "expirationdate":
+                //        query = search.SortDirection?.ToLower() == "desc" ?
+                //            query.OrderByDescending(d => d.expirationDate) :
+                //            query.OrderBy(d => d.expirationDate);
+                //        break;
+                //    // Thêm các trường sắp xếp khác tại đây
+                //    default:
+                //        query = query.OrderByDescending(d => d.created_at); // Mặc định nếu không có sắp xếp
+                //        break;
+                //}
 
                 // Phân trang và lấy dữ liệu
                 var warrantyDB = query
