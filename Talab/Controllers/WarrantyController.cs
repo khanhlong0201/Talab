@@ -232,7 +232,7 @@ namespace Talab.Controllers
             }
         }
 
-        [HttpPost("/create")]
+        [HttpPost("create")]
         public async Task<HttpResponseModel> CreateWarranty([FromBody] WarrantyModel request)
         {
             try
@@ -496,6 +496,86 @@ namespace Talab.Controllers
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
+
+        [HttpDelete("deleteMany")]
+        public async Task<HttpResponseModel> DeleteWarranties([FromBody] List<int> ids)
+        {
+            if (ids == null || !ids.Any())
+            {
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Danh sách ID không hợp lệ", null);
+            }
+
+            try
+            {
+                // Bắt đầu giao dịch
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                // Tìm tất cả các bảo hành cần cập nhật
+                var warranties = await _context.warrantys
+                    .Where(w => ids.Contains(w.warrantyId))
+                    .ToListAsync();
+
+                if (!warranties.Any())
+                {
+                    _logger.LogWarning("No warranties found for the provided IDs.");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Không tìm thấy bảo hành nào", null);
+                }
+
+                // Cập nhật trạng thái của các bảo hành
+                warranties.ForEach(w => w.state = 1);
+                _context.warrantys.UpdateRange(warranties);
+
+                // Tìm danh sách hình ảnh liên quan đến các bảo hành này
+                var warrantyIds = warranties.Select(w => w.warrantyId).ToList();
+                var images = await _context.images
+                    .Where(i => warrantyIds.Contains(i.warrantyId))
+                    .ToListAsync();
+
+                // Xóa các hình ảnh từ thư mục
+                var webRootPath = _webHostEnvironment.WebRootPath;
+                foreach (var image in images)
+                {
+                    var relativePath = image.link.TrimStart('/');
+                    var filePath = Path.Combine(webRootPath, relativePath);
+
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                        _logger.LogInformation("Deleted file: " + filePath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("File not found: " + filePath);
+                    }
+                }
+
+                // Cập nhật trạng thái của các hình ảnh
+                images.ForEach(i => i.state = 1);
+                _context.images.UpdateRange(images);
+
+                // Lưu các thay đổi vào cơ sở dữ liệu
+                var status = await _context.SaveChangesAsync();
+
+                if (status > 0)
+                {
+                    await transaction.CommitAsync();
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã xóa danh sách bảo hành và hình ảnh thành công", null);
+                }
+                else
+                {
+                    await transaction.RollbackAsync();
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "Không có thay đổi nào được thực hiện", null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error updating warranties and images: " + ex.Message);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
+            }
+        }
+
+
+
 
     }
 }

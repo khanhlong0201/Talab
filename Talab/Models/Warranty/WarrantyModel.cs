@@ -16,6 +16,6 @@
         public short State { get; set; }
         public List<string> ImageSrcList { get; set; }
 
-        public bool inventoryStatus { get; set; } //TODO
+        public bool InventoryStatus { get; set; } = true;
     }
 }
