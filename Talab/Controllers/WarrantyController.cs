@@ -26,6 +26,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Talab.Model.Search;
 using LinqKit;
+using System.Linq.Expressions;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -50,7 +51,7 @@ namespace Talab.Controllers
         {
             try
             {
-                if (search.Page <= 0 || search.PageSize <= 0 || search == null)
+                if (search == null || search.Page <= 0 || search.PageSize <= 0)
                 {
                     throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
@@ -60,31 +61,72 @@ namespace Talab.Controllers
                     .Where(d => d.state == (short)EState.Active)
                     .Count();
 
-                // Lấy dữ liệu cho trang hiện tại với sắp xếp
+                // Tạo predicate cho tìm kiếm
                 var predicate = PredicateBuilder.New<Warrantys>(d => d.state == (short)EState.Active);
-                if (!string.IsNullOrWhiteSpace(search.SearchModel.SearchString))
+
+                if (!string.IsNullOrWhiteSpace(search.SearchModel?.SearchString))
                 {
+                    var searchString = search.SearchModel.SearchString.ToLower();
                     predicate = predicate.And(d =>
-                                d.patientName.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.patientPhoneNumber.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.codeNumber.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.clinic.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.labName.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.doctor.ToLower().Contains(search.SearchModel.SearchString.ToLower()) ||
-                                d.product.ToLower().Contains(search.SearchModel.SearchString.ToLower())
-                            );
+                        d.patientName.ToLower().Contains(searchString) ||
+                        d.patientPhoneNumber.ToLower().Contains(searchString) ||
+                        d.codeNumber.ToLower().Contains(searchString) ||
+                        d.clinic.ToLower().Contains(searchString) ||
+                        d.labName.ToLower().Contains(searchString) ||
+                        d.doctor.ToLower().Contains(searchString) ||
+                        d.product.ToLower().Contains(searchString)
+                    );
                 }
-                if (!search.SearchModel.FromDate.HasValue)
+
+                if (search.SearchModel?.FromDate.HasValue == true)
                 {
                     predicate = predicate.And(d => d.expirationDate >= search.SearchModel.FromDate);
                 }
-                if (!search.SearchModel.ToDate.HasValue)
+
+                if (search.SearchModel?.ToDate.HasValue == true)
                 {
                     predicate = predicate.And(d => d.expirationDate <= search.SearchModel.ToDate);
                 }
-                var warrantyDB = _context.warrantys.AsNoTracking()
-                    .Where(predicate)
-                    .OrderByDescending(d => d.created_at) // Sắp xếp trước khi phân trang
+
+                // Truy vấn cơ sở dữ liệu
+                var query = _context.warrantys.AsNoTracking().Where(predicate);
+
+                // Xử lý sắp xếp
+                switch (search.Sort?.ToLower())
+                {
+                    case "patientname":
+                        query = search.SortDirection?.ToLower() == "desc" ?
+                            query.OrderByDescending(d => d.patientName) :
+                            query.OrderBy(d => d.patientName);
+                        break;
+                    case "patientphonenumber":
+                        query = search.SortDirection?.ToLower() == "desc" ?
+                            query.OrderByDescending(d => d.patientPhoneNumber) :
+                            query.OrderBy(d => d.patientPhoneNumber);
+                        break;
+                    case "codenumber":
+                        query = search.SortDirection?.ToLower() == "desc" ?
+                            query.OrderByDescending(d => d.codeNumber) :
+                            query.OrderBy(d => d.codeNumber);
+                        break;
+                    case "clinic":
+                        query = search.SortDirection?.ToLower() == "desc" ?
+                            query.OrderByDescending(d => d.clinic) :
+                            query.OrderBy(d => d.clinic);
+                        break;
+                    case "expirationdate":
+                        query = search.SortDirection?.ToLower() == "desc" ?
+                            query.OrderByDescending(d => d.expirationDate) :
+                            query.OrderBy(d => d.expirationDate);
+                        break;
+                    // Thêm các trường sắp xếp khác tại đây
+                    default:
+                        query = query.OrderByDescending(d => d.created_at); // Mặc định nếu không có sắp xếp
+                        break;
+                }
+
+                // Phân trang và lấy dữ liệu
+                var warrantyDB = query
                     .Skip((search.Page - 1) * search.PageSize)
                     .Take(search.PageSize)
                     .ToList();
@@ -109,9 +151,9 @@ namespace Talab.Controllers
                     status = "success",
                     message = "Thành công",
                     data = warrantyQuery,
-                    total,  // Tổng số bản ghi
-                    search.Page,  // Trang hiện tại
-                    search.PageSize  // Kích thước trang
+                    total,
+                    search.Page,
+                    search.PageSize
                 });
             }
             catch (Exception ex)
@@ -120,14 +162,16 @@ namespace Talab.Controllers
                 return Ok(new
                 {
                     status = "error",
-                    message = ex.Message != null ? ex.Message : "Thất bại",
+                    message = ex.Message ?? "Thất bại",
                     data = new List<object>(),
-                    total = 0,  // Tổng số bản ghi là 0 khi lỗi
+                    total = 0,
                     search.Page,
                     search.PageSize
                 });
             }
         }
+
+
 
         [HttpPut]
         public async Task<HttpResponseModel> UpdateWarranty([FromBody] WarrantyModel request)
