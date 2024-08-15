@@ -13,21 +13,17 @@ namespace Talab.Model.Search
 {
     public class SearchQueryModel
     {
-        public SearchModel search { get; set; }
-        public int page { get; set; }
-        public int pageSize { get; set; }   
+        public SearchModel SearchModel { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; } 
+        public string Sort { get; set; }
+        public string SortDirection { get; set; }
     }
     public class SearchModel
     {
-        public string patientName { get; set; }
-        public string patientPhoneNumber { get; set; }
-        public string clinic { get; set; }
-        public string labName { get; set; }
-        public string doctor { get; set; }
-        public string product { get; set; }
-        public string codeNumber { get; set; }
-        public DateTime? fromDate { get; set; }
-        public DateTime? toDate { get; set; }
+        public string SearchString { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 
 }

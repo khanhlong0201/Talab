@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CORE_TALAB.Models.Table
 {
-    public class warrantys : Auditable
+    public class Warrantys : Auditable
     {
         [Key]
         [Column("warranty_id")]
