@@ -1,4 +1,6 @@
-﻿namespace Talab.Model.Warranty
+﻿using Talab.Model.Image;
+
+namespace Talab.Model.Warranty
 {
     public class WarrantyModel
     {
@@ -14,8 +16,10 @@
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public short State { get; set; }
-        public List<string> ImageSrcList { get; set; }
-
-        public bool InventoryStatus { get; set; } = true;
+        public List<IFormFile> ImageSrcList { get; set; }
+    }
+    public class WarrantyReponseModel : WarrantyModel
+    {
+        public List<ImageModel> ListImages { get; set; }
     }
 }

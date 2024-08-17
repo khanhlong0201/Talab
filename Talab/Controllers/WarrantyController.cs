@@ -29,8 +29,8 @@ using LinqKit;
 using System.Linq.Expressions;
 using System.Data.Entity;
 using System.Reflection;
-using System.Linq.Dynamic.Core; // Thêm vào đầu file
 using System.Reflection;
+using Talab.Model.Image;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -51,332 +51,425 @@ namespace Talab.Controllers
         }
 
 
-[HttpPost]
-    public IActionResult GetWarrantys([FromBody] SearchQueryModel search)
-    {
-        try
-        {
-            if (search == null || search.Page <= 0 || search.PageSize <= 0)
-            {
-                throw new Exception("Dữ liệu đầu vào không hợp lệ !");
-            }
-
-            // Tính tổng số bản ghi
-            var total = _context.warrantys
-                .Where(d => d.state == (short)EState.Active)
-                .Count();
-
-            // Tạo predicate cho tìm kiếm
-            var predicate = PredicateBuilder.New<Warrantys>(d => d.state == (short)EState.Active);
-
-            if (!string.IsNullOrWhiteSpace(search.SearchModel?.SearchString))
-            {
-                var searchString = search.SearchModel.SearchString.ToLower();
-                predicate = predicate.And(d =>
-                    d.patientName.ToLower().Contains(searchString) ||
-                    d.patientPhoneNumber.ToLower().Contains(searchString) ||
-                    d.codeNumber.ToLower().Contains(searchString) ||
-                    d.clinic.ToLower().Contains(searchString) ||
-                    d.labName.ToLower().Contains(searchString) ||
-                    d.doctor.ToLower().Contains(searchString) ||
-                    d.product.ToLower().Contains(searchString)
-                );
-            }
-
-            if (search.SearchModel?.FromDate.HasValue == true)
-            {
-                predicate = predicate.And(d => d.expirationDate >= search.SearchModel.FromDate);
-            }
-
-            if (search.SearchModel?.ToDate.HasValue == true)
-            {
-                predicate = predicate.And(d => d.expirationDate <= search.SearchModel.ToDate);
-            }
-
-            // Truy vấn cơ sở dữ liệu
-            var query = _context.warrantys.Where(predicate);
-
-            // Xử lý sắp xếp động
-            if (!string.IsNullOrWhiteSpace(search.Sort))
-            {
-                var sortProperty = search.Sort.Trim();
-                var sortDirection = search.SortDirection?.ToLower() == "desc" ? "descending" : "ascending";
-
-                // Xác minh rằng thuộc tính tồn tại trên lớp Warrantys
-                var propertyInfo = typeof(Warrantys).GetProperty(sortProperty, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (propertyInfo != null)
-                {
-                    var parameter = Expression.Parameter(typeof(Warrantys), "w");
-                    var property = Expression.Property(parameter, propertyInfo);
-                    var lambda = Expression.Lambda<Func<Warrantys, object>>(Expression.Convert(property, typeof(object)), parameter);
-
-                    query = sortDirection == "descending"
-                        ? query.OrderByDescending(lambda)
-                        : query.OrderBy(lambda);
-                }
-                else
-                {
-                    // Nếu thuộc tính không hợp lệ, sắp xếp theo mặc định
-                    query = query.OrderByDescending(d => d.created_at);
-                }
-            }
-            else
-            {
-                // Sắp xếp theo mặc định nếu không có cột sắp xếp
-                query = query.OrderByDescending(d => d.created_at);
-            }
-
-            // Phân trang và lấy dữ liệu
-            var warrantyDB = query
-                .Skip((search.Page - 1) * search.PageSize)
-                .Take(search.PageSize)
-                .ToList();
-
-            var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
-            {
-                WarrantyId = a.warrantyId,
-                PatientName = a.patientName,
-                PatientPhoneNumber = a.patientPhoneNumber,
-                Clinic = a.clinic,
-                LabName = a.labName,
-                Doctor = a.doctor,
-                Product = a.product,
-                CodeNumber = a.codeNumber,
-                ExpirationDate = a.expirationDate,
-                CreatedAt = a.created_at,
-                UpdatedAt = a.updated_at
-            }).ToList();
-
-            return Ok(new
-            {
-                status = "success",
-                message = "Thành công",
-                data = warrantyQuery,
-                total,
-                search.Page,
-                search.PageSize
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Notification GetWarrantys: " + ex.Message);
-            return Ok(new
-            {
-                status = "error",
-                message = ex.Message ?? "Thất bại",
-                data = new List<object>(),
-                total = 0,
-                search.Page,
-                search.PageSize
-            });
-        }
-    }
-
-
-
-
-    [HttpPut]
-        public async Task<HttpResponseModel> UpdateWarranty([FromBody] WarrantyModel request)
+        [HttpPost]
+        public IActionResult GetWarrantys([FromBody] SearchQueryModel search)
         {
             try
             {
-                if (request == null || request.WarrantyId <= 0)
+                if (search == null || search.Page <= 0 || search.PageSize <= 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Dữ liệu đầu vào không hợp lệ !", null);
+                    throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
-                if (request.PatientName + "" == "")
+
+                // Tính tổng số bản ghi
+                var total = _context.warrantys
+                    .Where(d => d.state == (short)EState.Active)
+                    .Count();
+
+                // Tạo predicate cho tìm kiếm
+                var predicate = PredicateBuilder.New<Warrantys>(d => d.state == (short)EState.Active);
+
+                if (!string.IsNullOrWhiteSpace(search.SearchModel?.SearchString))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
+                    var searchString = search.SearchModel.SearchString.ToLower();
+                    predicate = predicate.And(d =>
+                        d.patientName.ToLower().Contains(searchString) ||
+                        d.patientPhoneNumber.ToLower().Contains(searchString) ||
+                        d.codeNumber.ToLower().Contains(searchString) ||
+                        d.clinic.ToLower().Contains(searchString) ||
+                        d.labName.ToLower().Contains(searchString) ||
+                        d.doctor.ToLower().Contains(searchString) ||
+                        d.product.ToLower().Contains(searchString)
+                    );
                 }
-                if (request.PatientPhoneNumber + "" == "")
+
+                if (search.SearchModel?.FromDate.HasValue == true)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập sdt bệnh nhân !", null);
+                    predicate = predicate.And(d => d.expirationDate >= search.SearchModel.FromDate);
                 }
-                if (request.Clinic + "" == "")
+
+                if (search.SearchModel?.ToDate.HasValue == true)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
+                    predicate = predicate.And(d => d.expirationDate <= search.SearchModel.ToDate);
                 }
-                if (request.LabName + "" == "")
+
+                // Truy vấn cơ sở dữ liệu
+                var query = _context.warrantys.Where(predicate);
+
+                // Xử lý sắp xếp động
+                if (!string.IsNullOrWhiteSpace(search.Sort))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
-                }
-                if (request.Doctor + "" == "")
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
-                }
-                if (request.Product + "" == "")
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
-                }
-                if (request.CodeNumber + "" == "")
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
-                }
-                var defaultDate = new DateTime();
-                if (request.ExpirationDate == null || request.ExpirationDate == defaultDate)
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
-                }
-                if (request.ImageSrcList == null || request.ImageSrcList.Count <= 0)
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành lên !");
-                }
-                var existingWarranty = await _context.warrantys.FirstOrDefaultAsync(a => a.warrantyId == request.WarrantyId);
-                if (existingWarranty == null)
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Không tìm thấy mã thẻ bảo thành !", null);
-                }
-                var checkExit = _context.warrantys.FirstOrDefault(d => d.codeNumber == request.CodeNumber && d.warrantyId != request.WarrantyId);
-                if (checkExit != null)
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
-                }
-                using var transaction = _context.Database.BeginTransaction();
-                existingWarranty.patientName = request.PatientName;
-                existingWarranty.clinic = request.Clinic;
-                existingWarranty.labName = request.LabName;
-                existingWarranty.doctor = request.Doctor;
-                existingWarranty.product = request.Product;
-                existingWarranty.codeNumber = request.CodeNumber;
-                existingWarranty.expirationDate = request.ExpirationDate;
-                existingWarranty.updated_at = DateTime.Now;
-                var status = _context.SaveChanges();
-                if (status <= 0)
-                {
-                    transaction.Rollback();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Lỗi khi cập nhật thẻ bảo thành !", null);
-                }
-                if (request.ImageSrcList != null && request.ImageSrcList.Count > 0)
-                {
-                    foreach (var link in request.ImageSrcList)
+                    var sortProperty = search.Sort.Trim();
+                    var sortDirection = search.SortDirection?.ToLower() == "desc" ? "descending" : "ascending";
+
+                    // Xác minh rằng thuộc tính tồn tại trên lớp Warrantys
+                    var propertyInfo = typeof(Warrantys).GetProperty(sortProperty, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                    if (propertyInfo != null)
                     {
-                        images imgae = new images
-                        {
-                            warrantyId = existingWarranty.warrantyId,
-                            link = link,
-                            link_name = Path.GetFileName(link),
-                            type = EType.Warranty.ToString(),
-                            state = (short)EState.Active,
-                            created_at = DateTime.Now,
-                        };
-                        _context.images.Add(imgae);
-                        var status_Image = _context.SaveChanges();
-                        if (status_Image <= 0)
-                        {
-                            transaction.Rollback();
-                            return HttpResponseModel.Make(REPONSE_ENUM.RS_AU_NOT_OK, "Lỗi lưu hình ảnh thẻ bảo thành !");
-                        }
+                        var parameter = Expression.Parameter(typeof(Warrantys), "w");
+                        var property = Expression.Property(parameter, propertyInfo);
+                        var lambda = Expression.Lambda<Func<Warrantys, object>>(Expression.Convert(property, typeof(object)), parameter);
+
+                        query = sortDirection == "descending"
+                            ? query.OrderByDescending(lambda)
+                            : query.OrderBy(lambda);
+                    }
+                    else
+                    {
+                        // Nếu thuộc tính không hợp lệ, sắp xếp theo mặc định
+                        query = query.OrderByDescending(d => d.created_at);
                     }
                 }
-                transaction.Commit();
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã lưu thành công");
+                else
+                {
+                    // Sắp xếp theo mặc định nếu không có cột sắp xếp
+                    query = query.OrderByDescending(d => d.created_at);
+                }
+
+                // Phân trang và lấy dữ liệu
+                var warrantyDB = query
+                    .Skip((search.Page - 1) * search.PageSize)
+                    .Take(search.PageSize)
+                    .ToList();
+
+                var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
+                {
+                    WarrantyId = a.warrantyId,
+                    PatientName = a.patientName,
+                    PatientPhoneNumber = a.patientPhoneNumber,
+                    Clinic = a.clinic,
+                    LabName = a.labName,
+                    Doctor = a.doctor,
+                    Product = a.product,
+                    CodeNumber = a.codeNumber,
+                    ExpirationDate = a.expirationDate,
+                    CreatedAt = a.created_at,
+                    UpdatedAt = a.updated_at
+                }).ToList();
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "Thành công",
+                    data = warrantyQuery,
+                    total,
+                    search.Page,
+                    search.PageSize
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError("Waranty UpdateWarranty: " + ex.Message);
+                _logger.LogError("Notification GetWarrantys: " + ex.Message);
+                return Ok(new
+                {
+                    status = "error",
+                    message = ex.Message ?? "Thất bại",
+                    data = new List<object>(),
+                    total = 0,
+                    search.Page,
+                    search.PageSize
+                });
+            }
+        }
+
+        [HttpPut("update/{id}")]
+        public async Task<HttpResponseModel> UpdateWarranty(
+            int id,
+            [FromForm] string PatientName,
+            [FromForm] string PatientPhoneNumber,
+            [FromForm] string Clinic,
+            [FromForm] string LabName,
+            [FromForm] string Doctor,
+            [FromForm] string Product,
+            [FromForm] string CodeNumber,
+            [FromForm] DateTime ExpirationDate,
+            [FromForm] List<IFormFile> ImageSrcList)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID bảo hành không hợp lệ", null);
+                }
+
+                // Xác thực dữ liệu đầu vào
+                if (string.IsNullOrWhiteSpace(PatientName))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
+                }
+                if (string.IsNullOrWhiteSpace(PatientPhoneNumber))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số điện thoại bệnh nhân !", null);
+                }
+                if (string.IsNullOrWhiteSpace(Clinic))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
+                }
+                if (string.IsNullOrWhiteSpace(LabName))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
+                }
+                if (string.IsNullOrWhiteSpace(Doctor))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
+                }
+                if (string.IsNullOrWhiteSpace(Product))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
+                }
+                if (string.IsNullOrWhiteSpace(CodeNumber))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
+                }
+                if (ExpirationDate == default(DateTime))
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
+                }
+                if (ImageSrcList == null || ImageSrcList.Count == 0)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
+                }
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                // Tìm bảo hành theo ID
+                var warranty =  _context.warrantys.Find(id);
+
+                if (warranty == null)
+                {
+                    _logger.LogWarning("Warranty not found with ID: " + id);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Bảo hành không tồn tại", null);
+                }
+
+                // Cập nhật thông tin bảo hành
+                warranty.patientName = PatientName;
+                warranty.patientPhoneNumber = PatientPhoneNumber;
+                warranty.clinic = Clinic;
+                warranty.labName = LabName;
+                warranty.doctor = Doctor;
+                warranty.product = Product;
+                warranty.codeNumber = CodeNumber;
+                warranty.expirationDate = ExpirationDate;
+                warranty.updated_at = DateTime.Now;
+
+                _context.warrantys.Update(warranty);
+
+                // Xử lý hình ảnh
+                var existingImages =  _context.images
+                    .Where(i => i.warrantyId == id)
+                    .ToList();
+
+                // Xóa các hình ảnh cũ từ thư mục
+                var webRootPath = _webHostEnvironment.WebRootPath;
+                foreach (var image in existingImages)
+                {
+                    var relativePath = image.link.TrimStart('/');
+                    var filePath = Path.Combine(webRootPath, relativePath);
+
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                        _logger.LogInformation("Deleted file: " + filePath);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("File not found: " + filePath);
+                    }
+                }
+
+                // Xóa các hình ảnh cũ khỏi cơ sở dữ liệu
+                _context.images.RemoveRange(existingImages);
+
+                // Thêm các hình ảnh mới
+                var imagesResponse = new List<string>();
+                var now = DateTime.Now;
+                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", $"{now.Year}_{now.Month}");
+
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                foreach (var file in ImageSrcList)
+                {
+                    var uniqueId = Guid.NewGuid().ToString();
+                    var fileName = $"{uniqueId}_{now.Ticks}{Path.GetExtension(file.FileName)}";
+                    var filePath = Path.Combine(folderPath, fileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(fileStream);
+                    }
+
+                    var relativePath = Path.Combine("Image", "warrantyImage", $"{now.Year}_{now.Month}", fileName);
+                    imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
+
+                    var image = new images
+                    {
+                        warrantyId = warranty.warrantyId,
+                        link = Path.Combine("/", relativePath).Replace("\\", "/"),
+                        link_name = Path.GetFileName(fileName),
+                        type = EType.Warranty.ToString(),
+                        state = (short)EState.Active,
+                        created_at = DateTime.Now,
+                    };
+                    _context.images.Add(image);
+                }
+
+                // Lưu các thay đổi vào cơ sở dữ liệu
+                var status = await _context.SaveChangesAsync();
+
+                if (status > 0)
+                {
+                    await transaction.CommitAsync();
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Cập nhật bảo hành thành công");
+                }
+                else
+                {
+                    await transaction.RollbackAsync();
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "Không có thay đổi nào được thực hiện", null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Warranty UpdateWarranty: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
 
+
+
         [HttpPost("create")]
-        public async Task<HttpResponseModel> CreateWarranty([FromBody] WarrantyModel request)
+        public async Task<HttpResponseModel> CreateWarranty(
+           [FromForm] string PatientName,
+           [FromForm] string PatientPhoneNumber,
+           [FromForm] string Clinic,
+           [FromForm] string LabName,
+           [FromForm] string Doctor,
+           [FromForm] string Product,
+           [FromForm] string CodeNumber,
+           [FromForm] DateTime ExpirationDate,
+           [FromForm] List<IFormFile> ImageSrcList)
         {
             try
             {
-                if (request == null)
-                {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Dữ liệu đầu vào không hợp lệ !", null);
-                }
-                if (request.PatientName + "" == "")
+                if (string.IsNullOrWhiteSpace(PatientName))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
                 }
-                if (request.PatientPhoneNumber + "" == "")
+                if (string.IsNullOrWhiteSpace(PatientPhoneNumber))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập sdt bệnh nhân !", null);
                 }
-                if (request.Clinic + "" == "")
+                if (string.IsNullOrWhiteSpace(Clinic))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
                 }
-                if (request.LabName + "" == "")
+                if (string.IsNullOrWhiteSpace(LabName))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
                 }
-                if (request.Doctor + "" == "")
+                if (string.IsNullOrWhiteSpace(Doctor))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
                 }
-                if (request.Product + "" == "")
+                if (string.IsNullOrWhiteSpace(Product))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
                 }
-                if (request.CodeNumber + "" == "")
+                if (string.IsNullOrWhiteSpace(CodeNumber))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
                 }
-                var defaultDate = new DateTime();
-                if (request.ExpirationDate == null || request.ExpirationDate == defaultDate)
+                if (ExpirationDate == default(DateTime))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
                 }
-                if (request.ImageSrcList == null || request.ImageSrcList.Count <= 0)
+                if (ImageSrcList == null || ImageSrcList.Count == 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành lên !");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
                 }
-                var checkExit = _context.warrantys.FirstOrDefault(d => d.codeNumber == request.CodeNumber);
+
+                var checkExit =  _context.warrantys
+                    .FirstOrDefault(d => d.codeNumber == CodeNumber);
+
                 if (checkExit != null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
                 }
-                using var transaction = _context.Database.BeginTransaction();
-                Warrantys warranty = new Warrantys()
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
                 {
-                    patientName = request.PatientName,
-                    patientPhoneNumber = request.PatientPhoneNumber,
-                    clinic = request.Clinic,
-                    labName = request.LabName,
-                    doctor = request.Doctor,
-                    product = request.Product,
-                    codeNumber = request.CodeNumber,
-                    expirationDate = request.ExpirationDate,
-                    created_at = DateTime.Now,
-                    updated_at = null as DateTime?,
-                    state = (short)EState.Active
-                };
-                _context.warrantys.Add(warranty);
-                var status = _context.SaveChanges();
-                if (status > 0)
-                {
-                    if (request.ImageSrcList != null && request.ImageSrcList.Count > 0)
+                    // Lưu thông tin bảo hành
+                    var warranty = new Warrantys
                     {
-                        foreach (var link in request.ImageSrcList)
-                        {
-                            images imgae = new images
-                            {
-                                warrantyId = warranty.warrantyId,
-                                link = link,
-                                link_name = Path.GetFileName(link),
-                                type = EType.Warranty.ToString(),
-                                state = (short)EState.Active,
-                                created_at = DateTime.Now,
-                            };
-                            _context.images.Add(imgae);
-                            var status_Image = _context.SaveChanges();
-                            if (status_Image <= 0)
-                            {
-                                transaction.Rollback();
-                                return HttpResponseModel.Make(REPONSE_ENUM.RS_AU_NOT_OK, "Lỗi lưu hình ảnh thẻ bảo thành !");
-                            }
-                        }
+                        patientName = PatientName,
+                        patientPhoneNumber = PatientPhoneNumber,
+                        clinic = Clinic,
+                        labName = LabName,
+                        doctor = Doctor,
+                        product = Product,
+                        codeNumber = CodeNumber,
+                        expirationDate = ExpirationDate,
+                        created_at = DateTime.Now,
+                        updated_at = null,
+                        state = (short)EState.Active
+                    };
+                    _context.warrantys.Add(warranty);
+                    await _context.SaveChangesAsync();
+
+                    // Lưu hình ảnh
+                    var imagesResponse = new List<string>();
+                    var webRootPath = _webHostEnvironment.WebRootPath;
+                    var now = DateTime.Now;
+                    var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", $"{now.Year}_{now.Month}");
+
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
                     }
-                    transaction.Commit();
+
+                    foreach (var file in ImageSrcList)
+                    {
+                        // Tạo một GUID mới để đảm bảo tính duy nhất
+                        var uniqueId = Guid.NewGuid().ToString();
+
+                        // Sử dụng GUID kết hợp với thời gian hiện tại và phần mở rộng của tệp
+                        var fileName = $"{uniqueId}_{now.Ticks}{Path.GetExtension(file.FileName)}";
+                        var filePath = Path.Combine(folderPath, fileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await file.CopyToAsync(fileStream);
+                        }
+
+                        var relativePath = Path.Combine("Image", "warrantyImage", $"{now.Year}_{now.Month}", fileName);
+                        imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
+
+                        var image = new images
+                        {
+                            warrantyId = warranty.warrantyId,
+                            link = Path.Combine("/", relativePath).Replace("\\", "/"),
+                            link_name = Path.GetFileName(fileName),
+                            type = EType.Warranty.ToString(),
+                            state = (short)EState.Active,
+                            created_at = DateTime.Now,
+                        };
+                        _context.images.Add(image);
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã lưu thành công");
                 }
-                else
+                catch (Exception)
                 {
-                    transaction.Rollback();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Lỗi không thêm được !");
+                    await transaction.RollbackAsync();
+                    throw; // Ném lại lỗi để xử lý ngoại lệ toàn cục
                 }
             }
             catch (Exception ex)
@@ -386,8 +479,8 @@ namespace Talab.Controllers
             }
         }
 
-        [HttpGet("{cardNumber?}")]
-        public async Task<HttpResponseModel> GetWarrantyBycodeNumber(string cardNumber)
+        [HttpGet("{cardNumber}")]
+        public async Task<HttpResponseModel> GetWarrantyWithImagesByCardNumber(string cardNumber)
         {
             try
             {
@@ -396,81 +489,112 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
-                // Lấy bảo hành theo mã số
-                var warrantyDB = await _context.warrantys
-                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.codeNumber == cardNumber);
+                var result = _context.warrantys
+                    .Where(w => w.state == (short)EState.Active && w.codeNumber == cardNumber)
+                    .GroupJoin(
+                        _context.images.Where(i => i.state == (short)EState.Active),
+                        w => w.warrantyId,
+                        i => i.warrantyId,
+                        (w, images) => new
+                        {
+                            Warranty = w,
+                            Images = images
+                        })
+                    .Select(wi => new WarrantyReponseModel
+                    {
+                        WarrantyId = wi.Warranty.warrantyId,
+                        PatientName = wi.Warranty.patientName,
+                        PatientPhoneNumber = wi.Warranty.patientPhoneNumber,
+                        Clinic = wi.Warranty.clinic,
+                        LabName = wi.Warranty.labName,
+                        Doctor = wi.Warranty.doctor,
+                        Product = wi.Warranty.product,
+                        CodeNumber = wi.Warranty.codeNumber,
+                        ExpirationDate = wi.Warranty.expirationDate,
+                        CreatedAt = wi.Warranty.created_at,
+                        UpdatedAt = wi.Warranty.updated_at,
+                        State = wi.Warranty.state,
+                        ListImages = wi.Images.Select(i => new ImageModel
+                        {
+                            imageId = i.image_id, // Ensure these match your actual property names
+                            link = i.link,
+                            linkName = i.link_name,
+                            type = i.type,
+                            createdAt = i.created_at
+                        }).ToList() // Ensure this is a List<ImageModel>
+                    })
+                    .SingleOrDefault();
 
-                if (warrantyDB == null)
+                if (result == null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
                 }
 
-                // Chuyển đổi đối tượng lấy được thành WarrantyModel
-                var warrantyModel = new WarrantyModel
-                {
-                    WarrantyId = warrantyDB.warrantyId,
-                    PatientName = warrantyDB.patientName,
-                    PatientPhoneNumber = warrantyDB.patientPhoneNumber,
-                    Clinic = warrantyDB.clinic,
-                    LabName = warrantyDB.labName,
-                    Doctor = warrantyDB.doctor,
-                    Product = warrantyDB.product,
-                    CodeNumber = warrantyDB.codeNumber,
-                    ExpirationDate = warrantyDB.expirationDate,
-                    CreatedAt = warrantyDB.created_at,
-                    UpdatedAt = warrantyDB.updated_at
-                };
-
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, warrantyModel);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, result);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Warranty GetWarrantyBycodeNumber: " + ex.Message);
+                _logger.LogError("Warranty GetWarrantyWithImagesByCardNumber: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
 
         [HttpGet("id/{id}")]
-        public async Task<HttpResponseModel> GetWarrantyById(int id)
+        public async Task<HttpResponseModel> GetWarrantyWithImagesById(int id)
         {
             try
             {
-                // Kiểm tra xem id có hợp lệ không
-                if (id <= 0)
+                if (id<=0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID không hợp lệ");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
-                // Lấy bảo hành theo ID
-                var warrantyDB = await _context.warrantys
-                    .FirstOrDefaultAsync(d => d.state == (short)EState.Active && d.warrantyId == id);
+                var result = _context.warrantys
+                    .Where(w => w.state == (short)EState.Active && w.warrantyId == id)
+                    .GroupJoin(
+                        _context.images.Where(i => i.state == (short)EState.Active),
+                        w => w.warrantyId,
+                        i => i.warrantyId,
+                        (w, images) => new
+                        {
+                            Warranty = w,
+                            Images = images
+                        })
+                    .Select(wi => new WarrantyReponseModel
+                    {
+                        WarrantyId = wi.Warranty.warrantyId,
+                        PatientName = wi.Warranty.patientName,
+                        PatientPhoneNumber = wi.Warranty.patientPhoneNumber,
+                        Clinic = wi.Warranty.clinic,
+                        LabName = wi.Warranty.labName,
+                        Doctor = wi.Warranty.doctor,
+                        Product = wi.Warranty.product,
+                        CodeNumber = wi.Warranty.codeNumber,
+                        ExpirationDate = wi.Warranty.expirationDate,
+                        CreatedAt = wi.Warranty.created_at,
+                        UpdatedAt = wi.Warranty.updated_at,
+                        State = wi.Warranty.state,
+                        ListImages = wi.Images.Select(i => new ImageModel
+                        {
+                            imageId = i.image_id, // Ensure these match your actual property names
+                            link = i.link,
+                            linkName = i.link_name,
+                            type = i.type,
+                            createdAt = i.created_at
+                        }).ToList() // Ensure this is a List<ImageModel>
+                    })
+                    .SingleOrDefault();
 
-                if (warrantyDB == null)
+                if (result == null)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
                 }
 
-                // Chuyển đổi đối tượng lấy được thành WarrantyModel
-                var warrantyModel = new WarrantyModel
-                {
-                    WarrantyId = warrantyDB.warrantyId,
-                    PatientName = warrantyDB.patientName,
-                    PatientPhoneNumber = warrantyDB.patientPhoneNumber,
-                    Clinic = warrantyDB.clinic,
-                    LabName = warrantyDB.labName,
-                    Doctor = warrantyDB.doctor,
-                    Product = warrantyDB.product,
-                    CodeNumber = warrantyDB.codeNumber,
-                    ExpirationDate = warrantyDB.expirationDate,
-                    CreatedAt = warrantyDB.created_at,
-                    UpdatedAt = warrantyDB.updated_at
-                };
-
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, warrantyModel);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, result);
             }
             catch (Exception ex)
             {
-                _logger.LogError("Warranty GetWarrantyById: " + ex.Message);
+                _logger.LogError("Warranty GetWarrantyWithImagesById: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
@@ -484,22 +608,19 @@ namespace Talab.Controllers
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // Tìm bảo hành cần xóa
-                var warranty = await _context.warrantys
-                    .FirstOrDefaultAsync(i => i.warrantyId == Id);
+                var warranty =  _context.warrantys
+                    .FirstOrDefault(i => i.warrantyId == Id);
 
                 if (warranty == null)
                 {
                     _logger.LogWarning("Warranty not found with ID: " + Id);
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Bảo hành không tồn tại", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tồn tại", null);
                 }
 
-                // Xóa bảo hành
-                _context.warrantys.Remove(warranty);
-
                 // Tìm danh sách hình ảnh liên quan đến bảo hành này
-                var images = await _context.images
+                var images =  _context.images
                     .Where(i => i.warrantyId == Id)
-                    .ToListAsync();
+                    .ToList();
 
                 // Xóa các hình ảnh từ thư mục
                 var webRootPath = _webHostEnvironment.WebRootPath;
@@ -522,19 +643,16 @@ namespace Talab.Controllers
                 // Xóa các hình ảnh khỏi cơ sở dữ liệu
                 _context.images.RemoveRange(images);
 
-                // Lưu các thay đổi vào cơ sở dữ liệu
-                var status = await _context.SaveChangesAsync();
+                // Xóa bảo hành khỏi cơ sở dữ liệu
+                _context.warrantys.Remove(warranty);
 
-                if (status > 0)
-                {
-                    await transaction.CommitAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Xóa thẻ bảo hành thành công", null);
-                }
-                else
-                {
-                    await transaction.RollbackAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "Không có thay đổi nào được thực hiện", null);
-                }
+                // Lưu các thay đổi vào cơ sở dữ liệu
+                await _context.SaveChangesAsync();
+
+                // Commit transaction
+                await transaction.CommitAsync();
+
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Xóa thẻ bảo hành thành công", null);
             }
             catch (Exception ex)
             {
@@ -550,32 +668,27 @@ namespace Talab.Controllers
             {
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Danh sách ID không hợp lệ", null);
             }
-
             try
             {
                 // Bắt đầu giao dịch
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
-                // Tìm tất cả các bảo hành cần cập nhật
-                var warranties = await _context.warrantys
+                // Tìm tất cả các bảo hành cần xóa
+                var warranties =  _context.warrantys
                     .Where(w => ids.Contains(w.warrantyId))
-                    .ToListAsync();
+                    .ToList();
 
                 if (!warranties.Any())
                 {
                     _logger.LogWarning("No warranties found for the provided IDs.");
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Không tìm thấy bảo hành nào", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Không tìm thấy thẻ bảo hành nào", null);
                 }
-
-                // Cập nhật trạng thái của các bảo hành
-                warranties.ForEach(w => w.state = 1);
-                _context.warrantys.UpdateRange(warranties);
 
                 // Tìm danh sách hình ảnh liên quan đến các bảo hành này
                 var warrantyIds = warranties.Select(w => w.warrantyId).ToList();
-                var images = await _context.images
+                var images =  _context.images
                     .Where(i => warrantyIds.Contains(i.warrantyId))
-                    .ToListAsync();
+                    .ToList();
 
                 // Xóa các hình ảnh từ thư mục
                 var webRootPath = _webHostEnvironment.WebRootPath;
@@ -595,9 +708,11 @@ namespace Talab.Controllers
                     }
                 }
 
-                // Cập nhật trạng thái của các hình ảnh
-                images.ForEach(i => i.state = 1);
-                _context.images.UpdateRange(images);
+                // Xóa các hình ảnh khỏi cơ sở dữ liệu
+                _context.images.RemoveRange(images);
+
+                // Xóa các bảo hành khỏi cơ sở dữ liệu
+                _context.warrantys.RemoveRange(warranties);
 
                 // Lưu các thay đổi vào cơ sở dữ liệu
                 var status = await _context.SaveChangesAsync();
@@ -615,12 +730,10 @@ namespace Talab.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error updating warranties and images: " + ex.Message);
+                _logger.LogError("Error deleting warranties and images: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
-
-
 
 
     }
