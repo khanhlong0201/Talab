@@ -492,6 +492,9 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
+                // Base URL cho hình ảnh
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/images/";
+
                 var result = _context.warrantys
                     .Where(w => w.state == (short)EState.Active && w.codeNumber == cardNumber)
                     .GroupJoin(
@@ -517,14 +520,7 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ListImages = wi.Images.Select(i => new ImageModel
-                        {
-                            imageId = i.image_id, // Ensure these match your actual property names
-                            link = i.link,
-                            linkName = i.link_name,
-                            type = i.type,
-                            createdAt = i.created_at
-                        }).ToList() // Ensure this is a List<ImageModel>
+                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList() // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
 
@@ -542,15 +538,18 @@ namespace Talab.Controllers
             }
         }
 
+
         [HttpGet("id/{id}")]
         public async Task<HttpResponseModel> GetWarrantyWithImagesById(int id)
         {
             try
             {
-                if (id<=0)
+                if (id <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/images/"; // Base URL cho hình ảnh
 
                 var result = _context.warrantys
                     .Where(w => w.state == (short)EState.Active && w.warrantyId == id)
@@ -577,15 +576,7 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => i.link).ToList()
-                        //ListImages = wi.Images.Select(i => new ImageModel
-                        //{
-                        //    imageId = i.image_id, // Ensure these match your actual property names
-                        //    link = i.link,
-                        //    linkName = i.link_name,
-                        //    type = i.type,
-                        //    createdAt = i.created_at
-                        //}).ToList() // Ensure this is a List<ImageModel>
+                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList() // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
 
@@ -602,6 +593,7 @@ namespace Talab.Controllers
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
+
 
         [HttpDelete("{Id}")]
         public async Task<HttpResponseModel> DeleteWarranty(int Id = -1)
@@ -737,6 +729,46 @@ namespace Talab.Controllers
                 _logger.LogError("Error deleting warranties and images: " + ex.Message);
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
+        }
+
+        [HttpGet("image/{fileName}")]
+        public async Task<IActionResult> GetImage(string fileName)
+        {
+            try
+            {
+                // Đường dẫn tới thư mục chứa hình ảnh0
+                var webRootPath = _webHostEnvironment.WebRootPath;
+                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", "2024_8");
+                var filePath = Path.Combine(folderPath, fileName);
+
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound(); // Trả về 404 nếu không tìm thấy hình ảnh
+                }
+
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+                var contentType = GetContentType(filePath); // Lấy loại nội dung từ phần mở rộng của tệp
+
+                return File(fileBytes, contentType); // Trả về hình ảnh dưới dạng tệp
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("GetImage: " + ex.Message);
+                return StatusCode(500, "Lỗi hệ thống khi lấy hình ảnh.");
+            }
+        }
+
+        // Helper method to determine content type based on file extension
+        private string GetContentType(string filePath)
+        {
+            var extension = Path.GetExtension(filePath).ToLowerInvariant();
+            return extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream", // Default type
+            };
         }
 
 
