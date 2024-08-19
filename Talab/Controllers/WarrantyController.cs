@@ -61,10 +61,7 @@ namespace Talab.Controllers
                     throw new Exception("Dữ liệu đầu vào không hợp lệ !");
                 }
 
-                // Tính tổng số bản ghi
-                var total = _context.warrantys
-                    .Where(d => d.state == (short)EState.Active)
-                    .Count();
+              
 
                 // Tạo predicate cho tìm kiếm
                 var predicate = PredicateBuilder.New<Warrantys>(d => d.state == (short)EState.Active);
@@ -95,7 +92,8 @@ namespace Talab.Controllers
 
                 // Truy vấn cơ sở dữ liệu
                 var query = _context.warrantys.Where(predicate);
-
+                // Tính tổng số bản ghi
+                var total = query.Count();
                 // Xử lý sắp xếp động
                 if (!string.IsNullOrWhiteSpace(search.Sort))
                 {
@@ -132,7 +130,7 @@ namespace Talab.Controllers
                     .Take(search.PageSize)
                     .ToList();
 
-                var warrantyQuery = warrantyDB.Select(a => new WarrantyModel
+                var warrantyQuery = warrantyDB.Select(a => new WarrantyViewModel
                 {
                     WarrantyId = a.warrantyId,
                     PatientName = a.patientName,
@@ -337,22 +335,21 @@ namespace Talab.Controllers
             }
         }
 
-
-
         [HttpPost("create")]
         public async Task<HttpResponseModel> CreateWarranty(
-           [FromForm] string PatientName,
-           [FromForm] string PatientPhoneNumber,
-           [FromForm] string Clinic,
-           [FromForm] string LabName,
-           [FromForm] string Doctor,
-           [FromForm] string Product,
-           [FromForm] string CodeNumber,
+           [FromForm] string? PatientName,
+           [FromForm] string? PatientPhoneNumber,
+           [FromForm] string? Clinic,
+           [FromForm] string? LabName,
+           [FromForm] string? Doctor,
+           [FromForm] string? Product,
+           [FromForm] string? CodeNumber,
            [FromForm] DateTime ExpirationDate,
-           [FromForm] List<IFormFile> ImageSrcList)
+           List<IFormFile> ImageSrcList)
         {
             try
             {
+                Response.StatusCode = 400; // TODO: Chỗ này nếu lỗi thì e set 400, còn thành công thì e set 200
                 if (string.IsNullOrWhiteSpace(PatientName))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
@@ -463,7 +460,7 @@ namespace Talab.Controllers
                     await _context.SaveChangesAsync();
 
                     await transaction.CommitAsync();
-
+                    Response.StatusCode = 200;
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã lưu thành công");
                 }
                 catch (Exception)
@@ -574,14 +571,15 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ListImages = wi.Images.Select(i => new ImageModel
-                        {
-                            imageId = i.image_id, // Ensure these match your actual property names
-                            link = i.link,
-                            linkName = i.link_name,
-                            type = i.type,
-                            createdAt = i.created_at
-                        }).ToList() // Ensure this is a List<ImageModel>
+                        ImageSrcPreviewList = wi.Images.Select(i => i.link).ToList()
+                        //ListImages = wi.Images.Select(i => new ImageModel
+                        //{
+                        //    imageId = i.image_id, // Ensure these match your actual property names
+                        //    link = i.link,
+                        //    linkName = i.link_name,
+                        //    type = i.type,
+                        //    createdAt = i.created_at
+                        //}).ToList() // Ensure this is a List<ImageModel>
                     })
                     .SingleOrDefault();
 
