@@ -25,6 +25,7 @@ namespace Talab.Model.Warranty
     {
         public List<ImageModel> ListImages { get; set; }
         public List<string> ImageSrcPreviewList { get; set; } = new List<string>();
+        public List<string> ImageLinkNameSrcPreviewList { get; set; } = new List<string>();
 
     }
 }

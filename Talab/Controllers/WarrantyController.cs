@@ -576,7 +576,8 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList() // Tạo URL đầy đủ
+                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList(),  // Tạo URL đầy đủ
+                        ImageLinkNameSrcPreviewList = wi.Images.Select(i => $"{i.link_name}").ToList(),  // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
 
