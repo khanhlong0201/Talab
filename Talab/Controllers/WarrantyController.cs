@@ -227,7 +227,13 @@ namespace Talab.Controllers
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
                 }
+                var checkExit = _context.warrantys
+    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId !=id);
 
+                if (checkExit != null)
+                {
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
+                }
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // Tìm bảo hành theo ID
