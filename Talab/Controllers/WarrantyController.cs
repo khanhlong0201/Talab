@@ -172,7 +172,7 @@ namespace Talab.Controllers
 
         [HttpPut("update/{id}")]
         public async Task<HttpResponseModel> UpdateWarranty(
-            int id,
+            int WarrantyId,
             [FromForm] string PatientName,
             [FromForm] string PatientPhoneNumber,
             [FromForm] string Clinic,
@@ -187,7 +187,7 @@ namespace Talab.Controllers
         {
             try
             {
-                if (id <= 0)
+                if (WarrantyId <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID bảo hành không hợp lệ", null);
                 }
@@ -230,7 +230,7 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
                 }
                 var checkExit = _context.warrantys
-    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId !=id);
+    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId != WarrantyId);
 
                 if (checkExit != null)
                 {
@@ -239,11 +239,11 @@ namespace Talab.Controllers
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // Tìm bảo hành theo ID
-                var warranty =  _context.warrantys.Find(id);
+                var warranty =  _context.warrantys.Find(WarrantyId);
 
                 if (warranty == null)
                 {
-                    _logger.LogWarning("Warranty not found with ID: " + id);
+                    _logger.LogWarning("Warranty not found with ID: " + WarrantyId);
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Bảo hành không tồn tại", null);
                 }
 
@@ -262,7 +262,7 @@ namespace Talab.Controllers
 
                 // Xử lý hình ảnh
                 var existingImages =  _context.images
-                    .Where(i => i.warrantyId == id)
+                    .Where(i => i.warrantyId == WarrantyId)
                     .ToList();
 
                 // Xóa các hình ảnh cũ từ thư mục
