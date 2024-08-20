@@ -287,7 +287,7 @@ namespace Talab.Controllers
                 // Thêm các hình ảnh mới
                 var imagesResponse = new List<string>();
                 var now = DateTime.Now;
-                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", $"{now.Year}_{now.Month}");
+                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage");
 
                 if (!Directory.Exists(folderPath))
                 {
@@ -448,7 +448,7 @@ namespace Talab.Controllers
                             await file.CopyToAsync(fileStream);
                         }
 
-                        var relativePath = Path.Combine("Image", "warrantyImage", $"{now.Year}_{now.Month}", fileName);
+                        var relativePath = Path.Combine("Image", "warrantyImage");
                         imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
 
                         var image = new images
@@ -549,7 +549,7 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/images/"; // Base URL cho hình ảnh
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/"; // Base URL cho hình ảnh
 
                 var result = _context.warrantys
                     .Where(w => w.state == (short)EState.Active && w.warrantyId == id)
@@ -739,7 +739,7 @@ namespace Talab.Controllers
             {
                 // Đường dẫn tới thư mục chứa hình ảnh0
                 var webRootPath = _webHostEnvironment.WebRootPath;
-                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", "2024_8");
+                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage");
                 var filePath = Path.Combine(folderPath, fileName);
 
                 if (!System.IO.File.Exists(filePath))
