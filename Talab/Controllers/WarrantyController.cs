@@ -31,6 +31,7 @@ using System.Data.Entity;
 using System.Reflection;
 using System.Reflection;
 using Talab.Model.Image;
+using Newtonsoft.Json;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -172,7 +173,7 @@ namespace Talab.Controllers
 
         [HttpPut("update/{id}")]
         public async Task<HttpResponseModel> UpdateWarranty(
-            int WarrantyId,
+            int id,
             [FromForm] string PatientName,
             [FromForm] string PatientPhoneNumber,
             [FromForm] string Clinic,
@@ -187,11 +188,11 @@ namespace Talab.Controllers
         {
             try
             {
-                if (WarrantyId <= 0)
+                List<BasicFile> files = JsonConvert.DeserializeObject<List<BasicFile>>(ImageSrcPreviewList);
+                if (id <= 0)
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID bảo hành không hợp lệ", null);
                 }
-
                 // Xác thực dữ liệu đầu vào
                 if (string.IsNullOrWhiteSpace(PatientName))
                 {
@@ -225,12 +226,12 @@ namespace Talab.Controllers
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
                 }
-                if (ImageSrcList == null || ImageSrcList.Count == 0)
+                if ((ImageSrcList == null || ImageSrcList.Count == 0) &&(files ==null || files.Count ==0))
                 {
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
                 }
                 var checkExit = _context.warrantys
-    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId != WarrantyId);
+    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId != id);
 
                 if (checkExit != null)
                 {
@@ -239,11 +240,11 @@ namespace Talab.Controllers
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // Tìm bảo hành theo ID
-                var warranty =  _context.warrantys.Find(WarrantyId);
+                var warranty =  _context.warrantys.Find(id);
 
                 if (warranty == null)
                 {
-                    _logger.LogWarning("Warranty not found with ID: " + WarrantyId);
+                    _logger.LogWarning("Warranty not found with ID: " + id);
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Bảo hành không tồn tại", null);
                 }
 
@@ -261,9 +262,17 @@ namespace Talab.Controllers
                 _context.warrantys.Update(warranty);
 
                 // Xử lý hình ảnh
-                var existingImages =  _context.images
-                    .Where(i => i.warrantyId == WarrantyId)
-                    .ToList();
+                //var imageById = _context.images
+                //    .Where(i => i.warrantyId == id)
+                //    .ToList();
+
+                var existingImages = _context.images
+    .Where(i => i.warrantyId == id)
+    .AsEnumerable() // Chuyển đổi thành danh sách trong bộ nhớ
+    .Where(i => files != null
+        && files.Count > 0
+        && !files.Any(d => d.Title.Contains(i.link_name)))
+    .ToList();
 
                 // Xóa các hình ảnh cũ từ thư mục
                 var webRootPath = _webHostEnvironment.WebRootPath;
