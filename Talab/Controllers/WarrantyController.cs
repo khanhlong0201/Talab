@@ -520,7 +520,12 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link_name}").ToList() // Tạo URL đầy đủ
+                        FileWithSrcList = wi.Images.Select(i => new BasicFile()
+                        {
+                            Src = $"{baseUrl}{i.link_name}",
+                            Id = i.image_id.ToString(),
+                            Title = i.link_name
+                        }).ToList() // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
 
@@ -576,7 +581,12 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link_name}").ToList(),  // Tạo URL đầy đủ
+                        ImageSrcPreviewList = wi.Images.Select(i => new BasicFile()
+                        {
+                            Id = i.image_id.ToString(),
+                            Src = $"{baseUrl}{i.link_name}",
+                            Title = i.link_name
+                        }).ToList(),  // Tạo URL đầy đủ
                         ImageLinkNameSrcPreviewList = wi.Images.Select(i => $"{i.link_name}").ToList(),  // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();

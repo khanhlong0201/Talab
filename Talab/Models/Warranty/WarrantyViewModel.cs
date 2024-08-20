@@ -21,10 +21,17 @@ namespace Talab.Model.Warranty
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+    public class BasicFile
+    {
+        public string Id { get; set; }  
+        public string Title { get; set; }
+        public string Src { get; set; }
+    }
     public class WarrantyReponseModel : WarrantyViewModel
     {
+        public List<BasicFile> FileWithSrcList { get; set; }
         public List<ImageModel> ListImages { get; set; }
-        public List<string> ImageSrcPreviewList { get; set; } = new List<string>();
+        public List<BasicFile> ImageSrcPreviewList { get; set; } = new List<BasicFile>();
         public List<string> ImageLinkNameSrcPreviewList { get; set; } = new List<string>();
 
     }
