@@ -305,7 +305,7 @@ namespace Talab.Controllers
                         await file.CopyToAsync(fileStream);
                     }
 
-                    var relativePath = Path.Combine("Image", "warrantyImage", $"{now.Year}_{now.Month}", fileName);
+                    var relativePath = Path.Combine("Image", "warrantyImage");
                     imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
 
                     var image = new images
@@ -427,7 +427,7 @@ namespace Talab.Controllers
                     var imagesResponse = new List<string>();
                     var webRootPath = _webHostEnvironment.WebRootPath;
                     var now = DateTime.Now;
-                    var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage", $"{now.Year}_{now.Month}");
+                    var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage");
 
                     if (!Directory.Exists(folderPath))
                     {
