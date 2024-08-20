@@ -493,7 +493,7 @@ namespace Talab.Controllers
                 }
 
                 // Base URL cho hình ảnh
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/images/";
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/Warranty/image/";
 
                 var result = _context.warrantys
                     .Where(w => w.state == (short)EState.Active && w.codeNumber == cardNumber)
@@ -520,7 +520,7 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList() // Tạo URL đầy đủ
+                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link_name}").ToList() // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
 
@@ -549,7 +549,7 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
                 }
 
-                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/"; // Base URL cho hình ảnh
+                var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/Warranty/image/"; // Base URL cho hình ảnh
 
                 var result = _context.warrantys
                     .Where(w => w.state == (short)EState.Active && w.warrantyId == id)
@@ -576,7 +576,7 @@ namespace Talab.Controllers
                         CreatedAt = wi.Warranty.created_at,
                         UpdatedAt = wi.Warranty.updated_at,
                         State = wi.Warranty.state,
-                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link}").ToList(),  // Tạo URL đầy đủ
+                        ImageSrcPreviewList = wi.Images.Select(i => $"{baseUrl}{i.link_name}").ToList(),  // Tạo URL đầy đủ
                         ImageLinkNameSrcPreviewList = wi.Images.Select(i => $"{i.link_name}").ToList(),  // Tạo URL đầy đủ
                     })
                     .SingleOrDefault();
