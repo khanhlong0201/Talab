@@ -174,20 +174,21 @@ namespace Talab.Controllers
         [HttpPut("update/{id}")]
         public async Task<HttpResponseModel> UpdateWarranty(
             int id,
-            [FromForm] string PatientName,
-            [FromForm] string PatientPhoneNumber,
-            [FromForm] string Clinic,
-            [FromForm] string LabName,
-            [FromForm] string Doctor,
-            [FromForm] string Product,
-            [FromForm] string CodeNumber,
-            [FromForm] DateTime ExpirationDate,
+            [FromForm] string? PatientName,
+            [FromForm] string? PatientPhoneNumber,
+            [FromForm] string? Clinic,
+            [FromForm] string? LabName,
+            [FromForm] string? Doctor,
+            [FromForm] string? Product,
+            [FromForm] string? CodeNumber,
+            [FromForm] DateTime? ExpirationDate,
             [FromForm] List<IFormFile> ImageSrcList,
             [FromForm] string ImageSrcPreviewList
             )
         {
             try
             {
+                Response.StatusCode = 400; // TODO: Chỗ này nếu lỗi thì e set 400, còn thành công thì e set 200
                 List<BasicFile> files = JsonConvert.DeserializeObject<List<BasicFile>>(ImageSrcPreviewList);
                 if (id <= 0)
                 {
@@ -337,6 +338,7 @@ namespace Talab.Controllers
                 if (status > 0)
                 {
                     await transaction.CommitAsync();
+                    Response.StatusCode = 200;
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Cập nhật bảo hành thành công");
                 }
                 else
@@ -361,7 +363,7 @@ namespace Talab.Controllers
            [FromForm] string? Doctor,
            [FromForm] string? Product,
            [FromForm] string? CodeNumber,
-           [FromForm] DateTime ExpirationDate,
+           [FromForm] DateTime? ExpirationDate,
            List<IFormFile> ImageSrcList)
         {
             try
