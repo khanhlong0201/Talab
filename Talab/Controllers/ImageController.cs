@@ -130,12 +130,12 @@ namespace Talab.Controllers
                     }
 
                     _logger.LogInformation("Notification UploadImage << SaveLocalFile End: " + DateTime.Now);
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, imagesResponse);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Successful", null, imagesResponse);
                 }
                 else
                 {
                     _logger.LogError("Notification Insert Image : image null");
-                    throw new Exception("Dữ liệu đầu vào không hợp lệ !");
+                    throw new Exception("Invalid input data !");
                 }
             }
             catch (Exception ex)
@@ -163,7 +163,7 @@ namespace Talab.Controllers
                                        createdAt = m.created_at,
                                    }
                         ).OrderByDescending(e => e.createdAt).ToList();
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", assignQuery);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Successful", assignQuery);
             }
             catch (Exception ex)
             {
@@ -184,7 +184,7 @@ namespace Talab.Controllers
                 if (image == null)
                 {
                     _logger.LogError("Image not found: " + id);
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Hình ảnh không tồn tại");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Image does not exist !");
                 }
 
                 // Xóa tệp hình ảnh từ thư mục
@@ -204,7 +204,7 @@ namespace Talab.Controllers
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Image deleted successfully: " + id);
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Xóa hình ảnh thành công");
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Image deleted successfully");
             }
             catch (Exception ex)
             {
