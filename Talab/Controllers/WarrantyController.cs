@@ -669,6 +669,27 @@ namespace Talab.Controllers
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
+        [HttpGet("authByCode/{code}")]
+        public async Task<HttpResponseModel> AuthByCode(string code)
+        {
+            try
+            {
+                Response.StatusCode = 400;
+
+                if (!string.IsNullOrEmpty(code) && code == "123456")
+                {
+                    Response.StatusCode = 200;
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đăng nhập thành công", null);
+                }
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã không đúng", null);
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error deleting warranty and images: " + ex.Message);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
+            }
+        }
 
         [HttpDelete("deleteMany")]
         public async Task<HttpResponseModel> DeleteWarranties([FromBody] List<int> ids)
