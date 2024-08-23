@@ -31,6 +31,7 @@ using System.Data.Entity;
 using System.Reflection;
 using System.Reflection;
 using Talab.Model.Image;
+using Newtonsoft.Json;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -56,9 +57,10 @@ namespace Talab.Controllers
         {
             try
             {
+                Response.StatusCode = 400; // TODO: Chỗ này nếu lỗi thì e set 400, còn thành công thì e set 200
                 if (search == null || search.Page <= 0 || search.PageSize <= 0)
                 {
-                    throw new Exception("Dữ liệu đầu vào không hợp lệ !");
+                    throw new Exception("Invalid input data !");
                 }
 
               
@@ -144,11 +146,11 @@ namespace Talab.Controllers
                     CreatedAt = a.created_at,
                     UpdatedAt = a.updated_at
                 }).ToList();
-
+                Response.StatusCode = 200;
                 return Ok(new
                 {
                     status = "success",
-                    message = "Thành công",
+                    message = "Successfully",
                     data = warrantyQuery,
                     total,
                     search.Page,
@@ -161,7 +163,7 @@ namespace Talab.Controllers
                 return Ok(new
                 {
                     status = "error",
-                    message = ex.Message ?? "Thất bại",
+                    message = ex.Message ?? "Error",
                     data = new List<object>(),
                     total = 0,
                     search.Page,
@@ -172,79 +174,80 @@ namespace Talab.Controllers
 
         [HttpPut("update/{id}")]
         public async Task<HttpResponseModel> UpdateWarranty(
-            int WarrantyId,
-            [FromForm] string PatientName,
-            [FromForm] string PatientPhoneNumber,
-            [FromForm] string Clinic,
-            [FromForm] string LabName,
-            [FromForm] string Doctor,
-            [FromForm] string Product,
-            [FromForm] string CodeNumber,
-            [FromForm] DateTime ExpirationDate,
+            int id,
+            [FromForm] string? PatientName,
+            [FromForm] string? PatientPhoneNumber,
+            [FromForm] string? Clinic,
+            [FromForm] string? LabName,
+            [FromForm] string? Doctor,
+            [FromForm] string? Product,
+            [FromForm] string? CodeNumber,
+            [FromForm] DateTime? ExpirationDate,
             [FromForm] List<IFormFile> ImageSrcList,
             [FromForm] string ImageSrcPreviewList
             )
         {
             try
             {
-                if (WarrantyId <= 0)
+                Response.StatusCode = 400; // TODO: Chỗ này nếu lỗi thì e set 400, còn thành công thì e set 200
+                List<BasicFile> files = JsonConvert.DeserializeObject<List<BasicFile>>(ImageSrcPreviewList);
+                if (id <= 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "ID bảo hành không hợp lệ", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Invalid warranty ID !", null);
                 }
-
                 // Xác thực dữ liệu đầu vào
                 if (string.IsNullOrWhiteSpace(PatientName))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the patient's name !", null);
                 }
                 if (string.IsNullOrWhiteSpace(PatientPhoneNumber))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số điện thoại bệnh nhân !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the patient's phone number !", null);
                 }
                 if (string.IsNullOrWhiteSpace(Clinic))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the clinic's name !", null);
                 }
                 if (string.IsNullOrWhiteSpace(LabName))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the lab name !", null);
                 }
                 if (string.IsNullOrWhiteSpace(Doctor))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the doctor !", null);
                 }
                 if (string.IsNullOrWhiteSpace(Product))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the product !", null);
                 }
                 if (string.IsNullOrWhiteSpace(CodeNumber))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the warranty card number !", null);
                 }
                 if (ExpirationDate == default(DateTime))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the warranty card's expiration date ! !", null);
                 }
-                if (ImageSrcList == null || ImageSrcList.Count == 0)
+                if ((ImageSrcList == null || ImageSrcList.Count == 0) &&(files ==null || files.Count ==0))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not uploaded the warranty card image !");
                 }
                 var checkExit = _context.warrantys
-    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId != WarrantyId);
+    .FirstOrDefault(d => d.codeNumber == CodeNumber && d.warrantyId != id);
 
                 if (checkExit != null)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "The warranty card number already exists !");
                 }
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
                 // Tìm bảo hành theo ID
-                var warranty =  _context.warrantys.Find(WarrantyId);
+                var warranty =  _context.warrantys.Find(id);
 
                 if (warranty == null)
                 {
-                    _logger.LogWarning("Warranty not found with ID: " + WarrantyId);
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Bảo hành không tồn tại", null);
+                    _logger.LogWarning("Warranty not found with ID: " + id);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Warranty does not exist !", null);
                 }
 
                 // Cập nhật thông tin bảo hành
@@ -261,9 +264,17 @@ namespace Talab.Controllers
                 _context.warrantys.Update(warranty);
 
                 // Xử lý hình ảnh
-                var existingImages =  _context.images
-                    .Where(i => i.warrantyId == WarrantyId)
-                    .ToList();
+                //var imageById = _context.images
+                //    .Where(i => i.warrantyId == id)
+                //    .ToList();
+
+                var existingImages = _context.images
+    .Where(i => i.warrantyId == id)
+    .AsEnumerable() // Chuyển đổi thành danh sách trong bộ nhớ
+    .Where(i => files != null
+        && files.Count > 0
+        && !files.Any(d => d.Title.Contains(i.link_name)))
+    .ToList();
 
                 // Xóa các hình ảnh cũ từ thư mục
                 var webRootPath = _webHostEnvironment.WebRootPath;
@@ -328,12 +339,13 @@ namespace Talab.Controllers
                 if (status > 0)
                 {
                     await transaction.CommitAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Cập nhật bảo hành thành công");
+                    Response.StatusCode = 200;
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Warranty update Successfully");
                 }
                 else
                 {
                     await transaction.RollbackAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "Không có thay đổi nào được thực hiện", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "No changes were made !", null);
                 }
             }
             catch (Exception ex)
@@ -352,7 +364,7 @@ namespace Talab.Controllers
            [FromForm] string? Doctor,
            [FromForm] string? Product,
            [FromForm] string? CodeNumber,
-           [FromForm] DateTime ExpirationDate,
+           [FromForm] DateTime? ExpirationDate,
            List<IFormFile> ImageSrcList)
         {
             try
@@ -360,7 +372,7 @@ namespace Talab.Controllers
                 Response.StatusCode = 400; // TODO: Chỗ này nếu lỗi thì e set 400, còn thành công thì e set 200
                 if (string.IsNullOrWhiteSpace(PatientName))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bệnh nhân !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the patient's name !", null);
                 }
                 if (string.IsNullOrWhiteSpace(PatientPhoneNumber))
                 {
@@ -368,31 +380,31 @@ namespace Talab.Controllers
                 }
                 if (string.IsNullOrWhiteSpace(Clinic))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên phòng khám !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the patient's phone number !", null);
                 }
                 if (string.IsNullOrWhiteSpace(LabName))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên Lab !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the lab name !", null);
                 }
                 if (string.IsNullOrWhiteSpace(Doctor))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên bác sĩ !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the doctor !", null);
                 }
                 if (string.IsNullOrWhiteSpace(Product))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập tên sản phẩm !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the product !", null);
                 }
                 if (string.IsNullOrWhiteSpace(CodeNumber))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập số thẻ bảo hành !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the warranty card number !", null);
                 }
                 if (ExpirationDate == default(DateTime))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa nhập ngày hết hạn thẻ bảo hành !", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "You have not entered the warranty card expiration date !", null);
                 }
                 if (ImageSrcList == null || ImageSrcList.Count == 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Bạn chưa tải lên hình thẻ bảo hành !");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Warranty card image has not been uploaded. !");
                 }
 
                 var checkExit =  _context.warrantys
@@ -400,7 +412,7 @@ namespace Talab.Controllers
 
                 if (checkExit != null)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Số thẻ bảo hành đã tồn tại !");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "The warranty card number already exists !");
                 }
 
                 using var transaction = await _context.Database.BeginTransactionAsync();
@@ -469,7 +481,7 @@ namespace Talab.Controllers
 
                     await transaction.CommitAsync();
                     Response.StatusCode = 200;
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã lưu thành công");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Saved Successfully");
                 }
                 catch (Exception)
                 {
@@ -491,7 +503,7 @@ namespace Talab.Controllers
             {
                 if (string.IsNullOrEmpty(cardNumber))
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Invalid code !");
                 }
 
                 // Base URL cho hình ảnh
@@ -533,10 +545,10 @@ namespace Talab.Controllers
 
                 if (result == null)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Warranty card not found !");
                 }
 
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, result);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Successfully", null, result);
             }
             catch (Exception ex)
             {
@@ -553,7 +565,7 @@ namespace Talab.Controllers
             {
                 if (id <= 0)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã số không hợp lệ");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Invalid code !");
                 }
 
                 var baseUrl = $"{Request.Scheme}://{Request.Host}/api/v1/Warranty/image/"; // Base URL cho hình ảnh
@@ -595,10 +607,10 @@ namespace Talab.Controllers
 
                 if (result == null)
                 {
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tìm thấy");
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Warranty card not found !");
                 }
 
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Thành công", null, result);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Successfully", null, result);
             }
             catch (Exception ex)
             {
@@ -623,7 +635,7 @@ namespace Talab.Controllers
                 if (warranty == null)
                 {
                     _logger.LogWarning("Warranty not found with ID: " + Id);
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Thẻ bảo hành không tồn tại", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Warranty card does not exist !", null);
                 }
 
                 // Tìm danh sách hình ảnh liên quan đến bảo hành này
@@ -661,7 +673,7 @@ namespace Talab.Controllers
                 // Commit transaction
                 await transaction.CommitAsync();
 
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Xóa thẻ bảo hành thành công", null);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Warranty card deleted Successfully !", null);
             }
             catch (Exception ex)
             {
@@ -696,7 +708,7 @@ namespace Talab.Controllers
         {
             if (ids == null || !ids.Any())
             {
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Danh sách ID không hợp lệ", null);
+                return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Invalid ID list", null);
             }
             try
             {
@@ -711,7 +723,7 @@ namespace Talab.Controllers
                 if (!warranties.Any())
                 {
                     _logger.LogWarning("No warranties found for the provided IDs.");
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "Không tìm thấy thẻ bảo hành nào", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_FOUND, "No warranty card found !", null);
                 }
 
                 // Tìm danh sách hình ảnh liên quan đến các bảo hành này
@@ -750,12 +762,12 @@ namespace Talab.Controllers
                 if (status > 0)
                 {
                     await transaction.CommitAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đã xóa danh sách bảo hành và hình ảnh thành công", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Successfully deleted warranty list and images !", null);
                 }
                 else
                 {
                     await transaction.RollbackAsync();
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "Không có thay đổi nào được thực hiện", null);
+                    return HttpResponseModel.Make(REPONSE_ENUM.RS_NO_CHANGE, "No changes were made !", null);
                 }
             }
             catch (Exception ex)
@@ -788,7 +800,7 @@ namespace Talab.Controllers
             catch (Exception ex)
             {
                 _logger.LogError("GetImage: " + ex.Message);
-                return StatusCode(500, "Lỗi hệ thống khi lấy hình ảnh.");
+                return StatusCode(500, "System error when fetching image.");
             }
         }
 
