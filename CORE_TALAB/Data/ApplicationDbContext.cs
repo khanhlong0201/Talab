@@ -13,5 +13,6 @@ namespace CORE_TALAB.Data
         }
         public DbSet<CORE_TALAB.Models.Table.Warrantys> warrantys { get; set; }
         public DbSet<CORE_TALAB.Models.Table.images> images { get; set; }
+        public DbSet<CORE_TALAB.Models.Table.auth> auth { get; set; }
     }
 }

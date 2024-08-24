@@ -46,3 +46,43 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.installation_image
     OWNER to postgres;
+
+
+
+-----
+
+CREATE TABLE warrantys
+(
+    warranty_id INT IDENTITY(1,1) PRIMARY KEY,
+    patientname NVARCHAR(MAX),
+    patientphonenumber NVARCHAR(MAX),
+    clinnic NVARCHAR(MAX),
+    labname NVARCHAR(MAX),
+    doctor NVARCHAR(MAX),
+    product NVARCHAR(MAX),
+    codenumber NVARCHAR(MAX),
+    expirationdate DATETIME,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+    updated_at DATETIME,
+    state SMALLINT NOT NULL DEFAULT 1
+);
+
+
+CREATE TABLE images
+(
+    image_id INT IDENTITY(1,1) PRIMARY KEY,
+    warranty_id INT,
+    link NVARCHAR(MAX),
+    link_name NVARCHAR(MAX),
+    type NVARCHAR(MAX),
+    state SMALLINT DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+    created_by INT DEFAULT 0
+);
+
+CREATE TABLE auth
+(
+    auth_id INT IDENTITY(1,1) PRIMARY KEY,  -- Auto-incrementing primary key
+    [key] NVARCHAR(MAX),                    -- NVARCHAR(MAX) column for the key
+    [name] NVARCHAR(MAX)                    -- NVARCHAR(MAX) column for the name
+);

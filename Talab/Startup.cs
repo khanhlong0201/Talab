@@ -96,7 +96,7 @@ namespace Talab
         private void ConfigurationDatabaseSettings(IServiceCollection services)
         {
             var ConnectionString = Configuration.GetConnectionString("TALAB");
-            services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(ConnectionString));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(ConnectionString));
         }
     }
 }

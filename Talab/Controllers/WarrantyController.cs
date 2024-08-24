@@ -32,6 +32,7 @@ using System.Reflection;
 using System.Reflection;
 using Talab.Model.Image;
 using Newtonsoft.Json;
+using System.Linq.Dynamic.Core;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -687,14 +688,24 @@ namespace Talab.Controllers
             try
             {
                 Response.StatusCode = 400;
-
-                if (!string.IsNullOrEmpty(code) && code == "123456")
+                var auth = _context.auth.Where(d => d.key == "code").FirstOrDefault();
+                if (auth!=null)
                 {
-                    Response.StatusCode = 200;
-                    return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Đăng nhập thành công", null);
+                    if(auth.name == code)
+                    {
+                        Response.StatusCode = 200;
+                        return HttpResponseModel.Make(REPONSE_ENUM.RS_OK, "Login successful.", null);
+                    }
+                    else
+                    {
+                        return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Invalid code !", null);
+                    }
                 }
-                return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Mã không đúng", null);
-                
+                else
+                {
+                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Code does not exist in the database !", null);
+
+                }
             }
             catch (Exception ex)
             {
