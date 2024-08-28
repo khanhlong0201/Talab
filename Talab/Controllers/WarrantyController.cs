@@ -1,38 +1,16 @@
 ﻿using CORE_TALAB.Data;
 using CORE_TALAB.Enum;
-using CORE_TALAB.Enum.Customers;
+using CORE_TALAB.Model.Reponse;
 using CORE_TALAB.Models.Table;
-using CORE_TALAB.Services;
-using CORE_TALAB.Util;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Net;
-using System.Numerics;
-using System.Threading.Tasks;
-using CORE_TALAB.Model.Reponse;
-using CORE_TALAB.Model.Reponse;
-using CORE_TALAB.Data;
-using CORE_TALAB.Model.Reponse;
-using System.Net.NetworkInformation;
-using Talab.Model.Warranty;
-using Microsoft.AspNetCore.Hosting;
-using System.Collections.Generic;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Talab.Model.Search;
 using LinqKit;
-using System.Linq.Expressions;
-using System.Data.Entity;
-using System.Reflection;
-using System.Reflection;
-using Talab.Model.Image;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Data.Entity;
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using System.Reflection;
+using Talab.Model.Search;
+using Talab.Model.Warranty;
 namespace Talab.Controllers
 {
     [ApiController]
@@ -43,7 +21,6 @@ namespace Talab.Controllers
         private readonly ILogger<WarrantyController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _webHostEnvironment;
-
         public WarrantyController(ApplicationDbContext context, ILogger<WarrantyController> logger, IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
         {
             _logger = logger;
@@ -278,11 +255,11 @@ namespace Talab.Controllers
     .ToList();
 
                 // Xóa các hình ảnh cũ từ thư mục
-                var webRootPath = _webHostEnvironment.WebRootPath;
+                var serverUrl = _configuration.GetSection("Server").Value;
                 foreach (var image in existingImages)
                 {
                     var relativePath = image.link.TrimStart('/');
-                    var filePath = Path.Combine(webRootPath, relativePath);
+                    var filePath = Path.Combine(relativePath,image.link_name);
 
                     if (System.IO.File.Exists(filePath))
                     {
@@ -301,7 +278,7 @@ namespace Talab.Controllers
                 // Thêm các hình ảnh mới
                 var imagesResponse = new List<string>();
                 var now = DateTime.Now;
-                var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage");
+                var folderPath = Path.Combine( "Image", "warrantyImage");
 
                 if (!Directory.Exists(folderPath))
                 {
@@ -318,14 +295,13 @@ namespace Talab.Controllers
                     {
                         await file.CopyToAsync(fileStream);
                     }
-
-                    var relativePath = Path.Combine("Image", "warrantyImage");
-                    imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
+                    var imageUrl = $"{serverUrl}/{folderPath}/{fileName}".Replace("\\", "/");
+                    imagesResponse.Add(imageUrl);
 
                     var image = new images
                     {
                         warrantyId = warranty.warrantyId,
-                        link = Path.Combine("/", relativePath).Replace("\\", "/"),
+                        link = imageUrl,
                         link_name = Path.GetFileName(fileName),
                         type = EType.Warranty.ToString(),
                         state = (short)EState.Active,
@@ -358,15 +334,15 @@ namespace Talab.Controllers
 
         [HttpPost("create")]
         public async Task<HttpResponseModel> CreateWarranty(
-           [FromForm] string? PatientName,
-           [FromForm] string? PatientPhoneNumber,
-           [FromForm] string? Clinic,
-           [FromForm] string? LabName,
-           [FromForm] string? Doctor,
-           [FromForm] string? Product,
-           [FromForm] string? CodeNumber,
-           [FromForm] DateTime? ExpirationDate,
-           List<IFormFile> ImageSrcList)
+        [FromForm] string? PatientName,
+        [FromForm] string? PatientPhoneNumber,
+        [FromForm] string? Clinic,
+        [FromForm] string? LabName,
+        [FromForm] string? Doctor,
+        [FromForm] string? Product,
+        [FromForm] string? CodeNumber,
+        [FromForm] DateTime? ExpirationDate,
+        List<IFormFile> ImageSrcList)
         {
             try
             {
@@ -408,7 +384,7 @@ namespace Talab.Controllers
                     return HttpResponseModel.Make(REPONSE_ENUM.RS_NOT_OK, "Warranty card image has not been uploaded. !");
                 }
 
-                var checkExit =  _context.warrantys
+                var checkExit = _context.warrantys
                     .FirstOrDefault(d => d.codeNumber == CodeNumber);
 
                 if (checkExit != null)
@@ -440,21 +416,18 @@ namespace Talab.Controllers
 
                     // Lưu hình ảnh
                     var imagesResponse = new List<string>();
-                    var webRootPath = _webHostEnvironment.WebRootPath;
+                    var serverUrl = _configuration.GetSection("Server").Value;
                     var now = DateTime.Now;
-                    var folderPath = Path.Combine(webRootPath, "Image", "warrantyImage");
-
-                    if (!Directory.Exists(folderPath))
-                    {
-                        Directory.CreateDirectory(folderPath);
-                    }
+                    var folderPath = Path.Combine( "Image", "warrantyImage");
+                    //// Đảm bảo thư mục tồn tại trên máy chủ
+                    //if (!Directory.Exists(folderPath))
+                    //{
+                    //    Directory.CreateDirectory(folderPath);
+                    //}
 
                     foreach (var file in ImageSrcList)
                     {
-                        // Tạo một GUID mới để đảm bảo tính duy nhất
                         var uniqueId = Guid.NewGuid().ToString();
-
-                        // Sử dụng GUID kết hợp với thời gian hiện tại và phần mở rộng của tệp
                         var fileName = $"{uniqueId}_{now.Ticks}{Path.GetExtension(file.FileName)}";
                         var filePath = Path.Combine(folderPath, fileName);
 
@@ -463,13 +436,14 @@ namespace Talab.Controllers
                             await file.CopyToAsync(fileStream);
                         }
 
-                        var relativePath = Path.Combine("Image", "warrantyImage");
-                        imagesResponse.Add(Path.Combine("/", relativePath).Replace("\\", "/"));
+                        // Tạo đường dẫn URL
+                        var imageUrl = $"{serverUrl}/{folderPath}/{fileName}".Replace("\\", "/");
+                        imagesResponse.Add(imageUrl);
 
                         var image = new images
                         {
                             warrantyId = warranty.warrantyId,
-                            link = Path.Combine("/", relativePath).Replace("\\", "/"),
+                            link = imageUrl,
                             link_name = Path.GetFileName(fileName),
                             type = EType.Warranty.ToString(),
                             state = (short)EState.Active,
@@ -496,6 +470,7 @@ namespace Talab.Controllers
                 return HttpResponseModel.Make(REPONSE_ENUM.RS_EXCEPTION, ex.Message);
             }
         }
+
 
         [HttpGet("{cardNumber}")]
         public async Task<HttpResponseModel> GetWarrantyWithImagesByCardNumber(string cardNumber)
