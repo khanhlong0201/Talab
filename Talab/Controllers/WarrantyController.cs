@@ -253,13 +253,9 @@ namespace Talab.Controllers
         && files.Count > 0
         && !files.Any(d => d.Title.Contains(i.link_name)))
     .ToList();
-
-                // Xóa các hình ảnh cũ từ thư mục
-                var serverUrl = _configuration.GetSection("Server").Value;
                 foreach (var image in existingImages)
                 {
-                    var relativePath = image.link.TrimStart('/');
-                    var filePath = Path.Combine(relativePath,image.link_name);
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), image.link);
 
                     if (System.IO.File.Exists(filePath))
                     {
@@ -278,12 +274,15 @@ namespace Talab.Controllers
                 // Thêm các hình ảnh mới
                 var imagesResponse = new List<string>();
                 var now = DateTime.Now;
-                var folderPath = Path.Combine( "Image", "warrantyImage");
+                //var folderPath = Path.Combine( "Image", "warrantyImage");
 
                 //if (!Directory.Exists(folderPath))
                 //{
                 //    Directory.CreateDirectory(folderPath);
                 //}
+                var folderPath = Path.Combine("wwwroot", "Image", "warrantyImage");
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), folderPath);
+                var serverUrl = _configuration.GetSection("Server").Value;
 
                 foreach (var file in ImageSrcList)
                 {
@@ -295,8 +294,10 @@ namespace Talab.Controllers
                     {
                         await file.CopyToAsync(fileStream);
                     }
-                    var imageUrl = $"{serverUrl}/{folderPath}/{fileName}".Replace("\\", "/");
-                    imagesResponse.Add(imageUrl);
+                    // Tạo đường dẫn URL
+                    var imageUrl = $"{folderPath}/{fileName}".Replace("\\", "/");
+                    var imageUrlResponse = $"{serverUrl}/{imageUrl}".Replace("\\", "/");
+                    imagesResponse.Add(imageUrlResponse);
 
                     var image = new images
                     {
@@ -415,21 +416,20 @@ namespace Talab.Controllers
                     await _context.SaveChangesAsync();
 
                     // Lưu hình ảnh
-                    var imagesResponse = new List<string>();
                     var serverUrl = _configuration.GetSection("Server").Value;
                     var now = DateTime.Now;
-                    var folderPath = Path.Combine( "Image", "warrantyImage");
-                    //// Đảm bảo thư mục tồn tại trên máy chủ
-                    //if (!Directory.Exists(folderPath))
-                    //{
-                    //    Directory.CreateDirectory(folderPath);
-                    //}
-
+                
+                    var folderPath = Path.Combine( "wwwroot", "Image", "warrantyImage");
+                    string uploadPath = Path.Combine(Directory.GetCurrentDirectory(),folderPath);
+                    if (!Directory.Exists(uploadPath))
+                    {
+                        Directory.CreateDirectory(uploadPath);
+                    }
                     foreach (var file in ImageSrcList)
                     {
                         var uniqueId = Guid.NewGuid().ToString();
                         var fileName = $"{uniqueId}_{now.Ticks}{Path.GetExtension(file.FileName)}";
-                        var filePath = Path.Combine(folderPath, fileName);
+                        var filePath = Path.Combine(uploadPath, fileName);
 
                         using (var fileStream = new FileStream(filePath, FileMode.Create))
                         {
@@ -437,8 +437,7 @@ namespace Talab.Controllers
                         }
 
                         // Tạo đường dẫn URL
-                        var imageUrl = $"{serverUrl}/{folderPath}/{fileName}".Replace("\\", "/");
-                        imagesResponse.Add(imageUrl);
+                        var imageUrl = $"{folderPath}/{fileName}".Replace("\\", "/");
 
                         var image = new images
                         {
@@ -620,11 +619,11 @@ namespace Talab.Controllers
                     .ToList();
 
                 // Xóa các hình ảnh từ thư mục
-                var webRootPath = _webHostEnvironment.WebRootPath;
+                //var webRootPath = _webHostEnvironment.WebRootPath;
                 foreach (var image in images)
                 {
                     var relativePath = image.link.TrimStart('/');
-                    var filePath = Path.Combine(webRootPath, relativePath);
+                    var filePath = relativePath;//Path.Combine(Directory.GetCurrentDirectory(), relativePath);
 
                     if (System.IO.File.Exists(filePath))
                     {
@@ -723,7 +722,7 @@ namespace Talab.Controllers
                 foreach (var image in images)
                 {
                     var relativePath = image.link.TrimStart('/');
-                    var filePath = Path.Combine(webRootPath, relativePath);
+                    var filePath = relativePath;//Path.Combine(webRootPath, relativePath);
 
                     if (System.IO.File.Exists(filePath))
                     {

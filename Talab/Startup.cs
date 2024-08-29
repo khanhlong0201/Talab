@@ -95,6 +95,7 @@ namespace Talab
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "api/v1/{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapControllers();
             });
         }
 
