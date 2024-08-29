@@ -42,7 +42,17 @@ namespace Talab
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCors();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyMethod()
+                               .AllowAnyHeader();
+                    });
+            });
             services.AddControllers().AddJsonOptions(options => {
                 options.JsonSerializerOptions.IgnoreNullValues = false;
                 // Example: Change property naming policy to camelCase
@@ -74,11 +84,7 @@ namespace Talab
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseCors(x => x
-                .SetIsOriginAllowed(origin => true)
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .AllowCredentials());
+            app.UseCors("AllowAll");
 
             app.UseRouting();
 

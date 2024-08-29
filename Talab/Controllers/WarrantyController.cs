@@ -150,7 +150,7 @@ namespace Talab.Controllers
             }
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPost("update/{id}")]
         public async Task<HttpResponseModel> UpdateWarranty(
             int id,
             [FromForm] string? PatientName,
@@ -280,10 +280,10 @@ namespace Talab.Controllers
                 var now = DateTime.Now;
                 var folderPath = Path.Combine( "Image", "warrantyImage");
 
-                if (!Directory.Exists(folderPath))
-                {
-                    Directory.CreateDirectory(folderPath);
-                }
+                //if (!Directory.Exists(folderPath))
+                //{
+                //    Directory.CreateDirectory(folderPath);
+                //}
 
                 foreach (var file in ImageSrcList)
                 {
