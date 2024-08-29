@@ -161,7 +161,7 @@ namespace Talab.Controllers
             [FromForm] string? Product,
             [FromForm] string? CodeNumber,
             [FromForm] DateTime? ExpirationDate,
-            [FromForm] List<IFormFile> ImageSrcList,
+          List<IFormFile> ImageSrcList,
             [FromForm] string ImageSrcPreviewList
             )
         {
