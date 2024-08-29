@@ -242,14 +242,10 @@ namespace Talab.Controllers
                 _context.warrantys.Update(warranty);
 
                 var fileNameList = files.Select(i => i.Title).ToList();
-                var needRemoveImages = _context.images
-                                                                                            .Where(i => i.warrantyId == id)
-                                                                                            .AsEnumerable() // Chuyển đổi thành danh sách trong bộ nhớ
-                                                                                            .Where(i =>!fileNameList.Contains(i.link_name))
-                                                                                            .ToList();
+                var needRemoveImages = _context.images .Where(i => i.warrantyId == id && !fileNameList.Contains(i.link_name)).ToList();
                 foreach (var image in needRemoveImages)
                 {
-                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), image.link);
+                    var filePath = image.link;
 
                     if (System.IO.File.Exists(filePath))
                     {
