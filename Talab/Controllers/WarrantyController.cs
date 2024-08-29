@@ -241,19 +241,13 @@ namespace Talab.Controllers
 
                 _context.warrantys.Update(warranty);
 
-                // Xử lý hình ảnh
-                //var imageById = _context.images
-                //    .Where(i => i.warrantyId == id)
-                //    .ToList();
-
-                var existingImages = _context.images
-    .Where(i => i.warrantyId == id)
-    .AsEnumerable() // Chuyển đổi thành danh sách trong bộ nhớ
-    .Where(i => files != null
-        && files.Count > 0
-        && !files.Any(d => d.Title.Contains(i.link_name)))
-    .ToList();
-                foreach (var image in existingImages)
+                var fileNameList = files.Select(i => i.Title).ToList();
+                var needRemoveImages = _context.images
+                                                                                            .Where(i => i.warrantyId == id)
+                                                                                            .AsEnumerable() // Chuyển đổi thành danh sách trong bộ nhớ
+                                                                                            .Where(i =>!fileNameList.Contains(i.link_name))
+                                                                                            .ToList();
+                foreach (var image in needRemoveImages)
                 {
                     var filePath = Path.Combine(Directory.GetCurrentDirectory(), image.link);
 
@@ -269,7 +263,7 @@ namespace Talab.Controllers
                 }
 
                 // Xóa các hình ảnh cũ khỏi cơ sở dữ liệu
-                _context.images.RemoveRange(existingImages);
+                _context.images.RemoveRange(needRemoveImages);
 
                 // Thêm các hình ảnh mới
                 var imagesResponse = new List<string>();
