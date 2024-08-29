@@ -62,12 +62,12 @@ namespace Talab.Controllers
 
                 if (search.SearchModel?.FromDate.HasValue == true)
                 {
-                    predicate = predicate.And(d => d.expirationDate >= search.SearchModel.FromDate);
+                    predicate = predicate.And(d => d.expirationDate.Value.Date >= search.SearchModel.FromDate.Value.Date);
                 }
 
                 if (search.SearchModel?.ToDate.HasValue == true)
                 {
-                    predicate = predicate.And(d => d.expirationDate <= search.SearchModel.ToDate);
+                    predicate = predicate.And(d => d.expirationDate.Value.Date <= search.SearchModel.ToDate.Value.Date);
                 }
 
                 // Truy vấn cơ sở dữ liệu
